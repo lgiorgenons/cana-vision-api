@@ -7,6 +7,8 @@ Pré-requisitos planejados:
 - npm/yarn (a definir)
 - Variáveis de ambiente para conectar ao core e ao banco (detalhes serão documentados conforme o desenvolvimento avançar)
 
+Node.js API (in progress) that exposes the CanaVision core processing pipeline, integrates user metadata, and surfaces insights/alerts stored in the database. FastAPI remains as a temporary reference while the new service is implemented.
+
 TODOs imediatos:
 1. Definir estrutura do projeto (framework, organização de pastas, padrões de código).
 2. Reimplementar rotas de workflow, consultas de status, ingestão de alertas e entrega de mapas/CSV.
