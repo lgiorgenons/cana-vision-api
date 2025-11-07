@@ -4,7 +4,7 @@ Este documento consolida as principais decisões e pontos de atenção para inic
 
 ## 00. Tecnologias e stack sugerida
 - **Runtime**: Node.js LTS (>= 20) com TypeScript para tipagem estática.
-- **Framework HTTP**: Express + `express-async-errors`; avaliar NestJS se precisarmos de DI e organização modular mais rígida.
+- **Framework HTTP**: Express + `express-async-errors` (escolhido para acelerar entrega inicial com equipe enxuta; NestJS fica como opção futura se precisarmos de DI/módulos opinados).
 - **ORM/Query Builder**: Prisma (PostgreSQL como base primária), com migrations versionadas.
 - **Autenticação**: JWT (access/refresh) com Bcrypt para senha; integração futura com Auth0/Keycloak se necessário.
 - **Documentação**: OpenAPI (Swagger) gerado automaticamente.
@@ -284,6 +284,27 @@ erDiagram
 - Considerar tabelas de histórico (`talhao_indices`) caso seja necessário granularidade por data/índice.
 - `consultas_sicar` pode armazenar geometrias importadas em tabela auxiliar (`sicar_poligonos`) referenciando `consultas_sicar.id`.
 
+### 02.5 Estratégia para enums vs. tabelas de referência
+| Campo | Entidade | Valores atuais | Implementação sugerida | Justificativa prática |
+| --- | --- | --- | --- | --- |
+| `tipo_documento` | clientes | `CPF`, `CNPJ` | **ENUM Postgres** | Conjunto imutável e pequeno; validação direta no banco. |
+| `status` | clientes | `ativo`,`suspenso`,`inativo` | **ENUM Postgres** | Estados operacionais raramente mudam; evita registros órfãos por exclusão. |
+| `role` | usuarios | `admin`,`gestor`,`analista`,`cliente` | **Tabela `roles` + FK** | Possibilita adicionar papéis específicos por cliente e armazenar descrições/regra de negócios para RBAC. |
+| `status` | usuarios | `ativo`,`bloqueado`,`pendente` | **ENUM Postgres** | Estados sistêmicos fixos usados em lógica crítica (login). |
+| `status` | talhoes | `ativo`,`inativo` | **ENUM Postgres** | Apenas liga/desliga visibilidade, não requer metadados extras. |
+| `pipeline` (tipo) | jobs | Lista curta (workflow principal, CSV, true-color etc.) | **Tabela `job_tipos` opcional** | Útil se precisarmos versionar fluxos; caso contrário manter varchar controlado pela aplicação. |
+| `status` | jobs | `pending`,`running`,`succeeded`,`failed`,`canceled` | **ENUM Postgres** | Estados de máquina finitos; mantém integridade mesmo sem joins extras. |
+| `tipo` | artefatos | `html`,`geotiff`,`csv`,`png`,`json` | **ENUM Postgres** | Conjunto pequeno; padroniza respostas e evita strings arbitrárias. |
+| `severidade` | alertas | `baixa`,`media`,`alta`,`critica` | **Tabela `alerta_severidades` + FK** | Cada nível precisa de cor, SLA, escalonamento; tabela permite parametrização por cliente. |
+| `status` | alertas | `aberto`,`em_analise`,`resolvido`,`ignorado` | **Tabela `alerta_status` + FK** | Facilita workflows customizados, ordenação e políticas de transição. |
+| `status` | consultas_sicar | `pending`,`success`,`error` | **ENUM Postgres** | Estados técnicos simples do conector. |
+| `acao` | auditoria | `insert`,`update`,`delete`,`login`,`logout` | **ENUM Postgres** | Operações técnicas controladas pelo sistema, improvável de mudar. |
+
+Diretrizes gerais:
+- Quando o valor é altamente estável e impacta lógica sistêmica → usar ENUM (garante integridade e performance).
+- Quando precisamos anexar metadados, controlar por cliente ou permitir expansão sem migrations complexas → usar tabela de referência com chave estrangeira.
+- Para os campos mapeados como tabela, criar seeds iniciais (`roles`, `alerta_severidades`, `alerta_status`, opcional `job_tipos`) e expor endpoints/admin tooling para manutenção futura, se necessário.
+
 ## 03. Endpoints prioritários
 ### 03.1 Autenticação e usuários
 - `POST /auth/login`: email + senha → tokens.
@@ -339,7 +360,12 @@ erDiagram
 - **Envio de notificações**: webhooks/email para alertas críticos (fase posterior).
 
 ## 05. Roadmap proposto
-1. **Fundação**: bootstrap do projeto Node.js com TypeScript, lint/testes, Docker, CI básico.
+1. **Fundação (Express)**:
+   - Gerar projeto com TypeScript, ESLint/Prettier, Jest.
+   - Configurar aliases (`tsconfig-paths`), logger (Winston+pino-pretty) e variáveis de ambiente (`dotenv-flow`).
+   - Adicionar middlewares essenciais (CORS, rate limit, central error handler com `express-async-errors`).
+   - Docker Compose com Postgres + Redis (para jobs/filas).
+   - Prisma (schema baseado na Seção 02) + scripts `prisma migrate dev` / `generate`.
 2. **Autenticação & usuários**: implementação JWT + RBAC + CRUD inicial.
 3. **Módulo clientes/propriedades/talhões**: modelo espacial, integrações GIS básicas.
 4. **Jobs & core integration**: wrappers para pipeline atual, armazenamento de artefatos.
