@@ -1,0 +1,37 @@
+Vamos iniciar um projeto de API para o nosso serviço core em python para tratamento das imagens, basicamente 
+que eu tenho mapeado ainda nós vamos ter que fornecer para nosso serviço em python algumas informações,
+
+Como:
+    Os dados do banco - Cliente, Talhões relacionados com cada cliente, propriedades, alertas.
+
+    Consumo de API governamental como SICAR para construção e definição de area de propriedades.
+    Sistema de Login.
+
+    Fornecer o mapa em html ou Geotiff para o front end de acordo com o usuario, vamos ter opção de oferecer por talhões, propriedades ou o mapa geral.
+
+
+Técnologia por enquanto minha escolha é node.js express, caso tenhamos alguma opção diferente peço que me alerte.
+
+Como primeiro passo peço que crie um .md detalhado baseado na descrição aqui
+e nos demais arquivos .md que coloquei nessa pasta de task, vamos planejar por agora pelo menos os principais
+end points, técnologias e estruturas que vamos utilizar e vamos executar um todo.md também. minha idéia  do fluxo seria seguir
+
+00 Técnologias
+01 Design Pattern
+02 Vou precisar de ajuda para estruturar o banco.
+03 Estrutura dos end-points (
+    Lógica do Usuario: Login, Cadastro, Recuperação de Senha, permissões de usuario
+    Propriedade: Vinculada a Usuarios, Talhões de cana,
+    propriedades, podemos utilziar um ID geral que podemos ligar tanto as propriedades quanto 
+    usuarios e quanto analises.
+
+    Ai tudo temos que ter end-points de consulta , edição
+
+    Temos precisamos consumir também a API SICAR
+
+    ...Temos mais pontos validos, peço que me sugira
+    )
+
+04 Após analise decidimos os próximos passos
+
+
