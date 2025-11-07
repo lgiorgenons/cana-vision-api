@@ -1,1 +1,7 @@
-// TODO: tipar contexto da requisição (usuário autenticado, cliente, permissões).
+import type { UsuarioRole } from '@domain/entities/usuario.entity';
+
+export interface AuthenticatedRequestContext {
+  userId: string;
+  role: UsuarioRole;
+  clienteId?: string | null;
+}

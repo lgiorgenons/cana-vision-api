@@ -16,11 +16,20 @@ module.exports = {
       'warn',
       {
         'newlines-between': 'always',
-        groups: [['builtin', 'external'], 'internal', ['parent', 'sibling', 'index']],
+        groups: [['builtin'], ['external'], 'internal', ['parent', 'sibling', 'index']],
         alphabetize: { order: 'asc', caseInsensitive: true },
       },
     ],
     '@typescript-eslint/no-explicit-any': 'warn',
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+      },
+    ],
+    'import/no-named-as-default-member': 'off',
+    'import/no-named-as-default': 'off',
   },
   settings: {
     'import/resolver': {

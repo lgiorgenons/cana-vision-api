@@ -14,6 +14,7 @@ const config: Config = {
     '^@dtos/(.*)$': '<rootDir>/src/dtos/$1',
     '^@domain/(.*)$': '<rootDir>/src/domain/$1',
     '^@common/(.*)$': '<rootDir>/src/common/$1',
+    '^@middlewares/(.*)$': '<rootDir>/src/middlewares/$1',
     '^@utils/(.*)$': '<rootDir>/src/utils/$1'
   }
 };

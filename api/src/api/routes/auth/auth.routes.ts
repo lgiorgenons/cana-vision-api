@@ -1,1 +1,11 @@
-// TODO: definir rotas do domínio auth.
+import { Router } from 'express';
+
+import { authController } from '@api/controllers/auth/auth.controller';
+
+const router = Router();
+
+router.post('/register', authController.register);
+router.post('/login', authController.login);
+router.post('/forgot-password', authController.forgotPassword);
+
+export { router as authRouter };

@@ -1,5 +1,3 @@
-// TODO: Modelar entidades conforme `Tasks/Planejamento_API.md` (seção 02).
-// Exemplo de configuração inicial:
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,4 +5,327 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model Role {
+  codigo    String    @id @db.VarChar(40)
+  descricao String?   @db.VarChar(200)
+  nivel     Int?      @db.SmallInt
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  usuarios  Usuario[]
+
+  @@map("roles")
+}
+
+model Cliente {
+  id              String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nome            String          @db.VarChar(200)
+  documento       String          @unique @db.VarChar(20)
+  tipoDocumento   TipoDocumento   @map("tipo_documento")
+  emailContato    String?         @map("email_contato") @db.VarChar(200)
+  telefoneContato String?         @map("telefone_contato") @db.VarChar(30)
+  responsavel     String?         @db.VarChar(200)
+  status          ClienteStatus?  @default(ativo)
+  config          Json            @default("{}")
+  createdAt       DateTime?       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime?       @default(now()) @map("updated_at") @db.Timestamptz(6)
+  consultas       ConsultaSicar[]
+  jobs            Job[]
+  propriedades    Propriedade[]
+  usuarios        Usuario[]
+
+  @@map("clientes")
+}
+
+model Usuario {
+  id                   String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  clienteId            String?            @map("cliente_id") @db.Uuid
+  nome                 String             @db.VarChar(150)
+  email                String             @unique @db.VarChar(200)
+  passwordHash         String             @map("hash_senha") @db.VarChar(200)
+  roleCodigo           String?            @map("role") @db.VarChar(40)
+  status               UsuarioStatus?     @default(ativo)
+  ultimoLogin          DateTime?          @map("ultimo_login") @db.Timestamptz(6)
+  tfaSecret            String?            @map("tfa_secret") @db.VarChar(64)
+  metadata             Json               @default("{}")
+  resetTokenHash       String?            @map("reset_token_hash") @db.VarChar(200)
+  resetTokenExpiresAt  DateTime?          @map("reset_token_expires_at") @db.Timestamptz(6)
+  createdAt            DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime?          @default(now()) @map("updated_at") @db.Timestamptz(6)
+  alertasResp          Alerta[]           @relation("AlertasResponsavel")
+  auditorias           Auditoria[]
+  jobsIniciados        Job[]              @relation("JobIniciadoPor")
+  permissoesConcedidas UsuarioPermissao[] @relation("PermissaoConcedente")
+  permissoes           UsuarioPermissao[]
+  cliente              Cliente?           @relation(fields: [clienteId], references: [id], onUpdate: NoAction)
+  role                 Role?              @relation(fields: [roleCodigo], references: [codigo], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("usuarios")
+}
+
+model Permissao {
+  id        Int                @id @default(autoincrement())
+  codigo    String             @unique @db.VarChar(80)
+  descricao String?            @db.VarChar(200)
+  createdAt DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
+  usuarios  UsuarioPermissao[]
+
+  @@map("permissoes")
+}
+
+model UsuarioPermissao {
+  usuarioId    String    @map("usuario_id") @db.Uuid
+  permissaoId  Int       @map("permissao_id")
+  concedidoPor String?   @map("concedido_por") @db.Uuid
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  concedente   Usuario?  @relation("PermissaoConcedente", fields: [concedidoPor], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  permissao    Permissao @relation(fields: [permissaoId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuario      Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([usuarioId, permissaoId])
+  @@map("usuario_permissoes")
+}
+
+model Propriedade {
+  id               String                   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  clienteId        String?                  @map("cliente_id") @db.Uuid
+  nome             String                   @db.VarChar(200)
+  codigoInterno    String                   @map("codigo_interno") @db.VarChar(60)
+  codigoSicar      String?                  @unique @map("codigo_sicar") @db.VarChar(60)
+  geom             Unsupported("geometry")?
+  geojson          Json?
+  areaHectares     Decimal?                 @map("area_hectares") @db.Decimal(12, 2)
+  culturaPrincipal String?                  @map("cultura_principal") @db.VarChar(100)
+  safraAtual       String?                  @map("safra_atual") @db.VarChar(20)
+  metadata         Json                     @default("{}")
+  createdAt        DateTime?                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime?                @default(now()) @map("updated_at") @db.Timestamptz(6)
+  consultas        ConsultaSicar[]
+  jobs             Job[]
+  cliente          Cliente?                 @relation(fields: [clienteId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  talhoes          Talhao[]
+
+  @@unique([clienteId, codigoInterno])
+  @@index([geom], map: "propriedades_geom_gix", type: Gist)
+  @@map("propriedades")
+}
+
+model Talhao {
+  id            String                   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  propriedadeId String?                  @map("propriedade_id") @db.Uuid
+  codigo        String                   @db.VarChar(60)
+  nome          String?                  @db.VarChar(120)
+  geom          Unsupported("geometry")?
+  geojson       Json?
+  areaHectares  Decimal?                 @map("area_hectares") @db.Decimal(12, 2)
+  variedade     String?                  @db.VarChar(80)
+  safra         String?                  @db.VarChar(20)
+  status        TalhaoStatus?            @default(ativo)
+  createdAt     DateTime?                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime?                @default(now()) @map("updated_at") @db.Timestamptz(6)
+  alertas       Alerta[]
+  artefatos     Artefato[]
+  jobs          Job[]
+  propriedade   Propriedade?             @relation(fields: [propriedadeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([propriedadeId, codigo])
+  @@index([geom], map: "talhoes_geom_gix", type: Gist)
+  @@map("talhoes")
+}
+
+model Job {
+  id            String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  clienteId     String?      @map("cliente_id") @db.Uuid
+  propriedadeId String?      @map("propriedade_id") @db.Uuid
+  talhaoId      String?      @map("talhao_id") @db.Uuid
+  iniciadoPorId String?      @map("iniciado_por") @db.Uuid
+  pipeline      String       @db.VarChar(80)
+  status        JobStatus
+  parametros    Json
+  resultadoDir  String?      @map("resultado_dir") @db.VarChar(255)
+  erroMensagem  String?      @map("erro_mensagem")
+  createdAt     DateTime?    @default(now()) @map("created_at") @db.Timestamptz(6)
+  iniciadoEm    DateTime?    @map("iniciado_em") @db.Timestamptz(6)
+  finalizadoEm  DateTime?    @map("finalizado_em") @db.Timestamptz(6)
+  alertas       Alerta[]
+  artefatos     Artefato[]
+  cliente       Cliente?     @relation(fields: [clienteId], references: [id], onUpdate: NoAction)
+  iniciadoPor   Usuario?     @relation("JobIniciadoPor", fields: [iniciadoPorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  propriedade   Propriedade? @relation(fields: [propriedadeId], references: [id], onUpdate: NoAction)
+  talhao        Talhao?      @relation(fields: [talhaoId], references: [id], onUpdate: NoAction)
+
+  @@index([status])
+  @@map("jobs")
+}
+
+model Artefato {
+  id       String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  jobId    String?      @map("job_id") @db.Uuid
+  talhaoId String?      @map("talhao_id") @db.Uuid
+  tipo     ArtefatoTipo
+  formato  String?      @db.VarChar(40)
+  indice   String?      @db.VarChar(40)
+  caminho  String       @db.VarChar(255)
+  checksum String?      @db.VarChar(64)
+  metadata Json         @default("{}")
+  geradoEm DateTime?    @default(now()) @map("gerado_em") @db.Timestamptz(6)
+  job      Job?         @relation(fields: [jobId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  talhao   Talhao?      @relation(fields: [talhaoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([jobId, caminho])
+  @@map("artefatos")
+}
+
+model Alerta {
+  id               String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  talhaoId         String?           @map("talhao_id") @db.Uuid
+  jobId            String?           @map("job_id") @db.Uuid
+  responsavelId    String?           @map("responsavel_id") @db.Uuid
+  tipo             String            @db.VarChar(80)
+  severidadeCodigo String?           @map("severidade") @db.VarChar(40)
+  statusCodigo     String?           @map("status") @db.VarChar(40)
+  titulo           String?           @db.VarChar(150)
+  mensagem         String?
+  payload          Json
+  geradoEm         DateTime?         @default(now()) @map("gerado_em") @db.Timestamptz(6)
+  resolvidoEm      DateTime?         @map("resolvido_em") @db.Timestamptz(6)
+  job              Job?              @relation(fields: [jobId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  responsavel      Usuario?          @relation("AlertasResponsavel", fields: [responsavelId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  severidade       AlertaSeveridade? @relation(fields: [severidadeCodigo], references: [codigo], onDelete: NoAction, onUpdate: NoAction)
+  statusRef        AlertaStatus?     @relation(fields: [statusCodigo], references: [codigo], onDelete: NoAction, onUpdate: NoAction)
+  talhao           Talhao?           @relation(fields: [talhaoId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([statusCodigo])
+  @@map("alertas")
+}
+
+model AlertaSeveridade {
+  codigo     String    @id @db.VarChar(40)
+  cor        String?   @db.VarChar(20)
+  prioridade Int?      @db.SmallInt
+  descricao  String?   @db.VarChar(200)
+  createdAt  DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  alertas    Alerta[]
+
+  @@map("alerta_severidades")
+}
+
+model AlertaStatus {
+  codigo    String    @id @db.VarChar(40)
+  ordem     Int?      @db.SmallInt
+  descricao String?   @db.VarChar(200)
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  alertas   Alerta[]
+
+  @@map("alerta_status")
+}
+
+model ConsultaSicar {
+  id            String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  clienteId     String?        @map("cliente_id") @db.Uuid
+  propriedadeId String?        @map("propriedade_id") @db.Uuid
+  codigoCar     String?        @map("codigo_car") @db.VarChar(60)
+  parametros    Json
+  resposta      Json?
+  status        ConsultaStatus
+  mensagemErro  String?        @map("mensagem_erro")
+  executadoEm   DateTime?      @default(now()) @map("executado_em") @db.Timestamptz(6)
+  atualizadoEm  DateTime?      @default(now()) @map("atualizado_em") @db.Timestamptz(6)
+  cliente       Cliente?       @relation(fields: [clienteId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  propriedade   Propriedade?   @relation(fields: [propriedadeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([propriedadeId, codigoCar])
+  @@map("consultas_sicar")
+}
+
+model Auditoria {
+  id          BigInt        @id @default(autoincrement())
+  tabela      String        @db.VarChar(80)
+  registroId  String        @map("registro_id") @db.Uuid
+  acao        AuditoriaAcao
+  dadosAntes  Json?         @map("dados_antes")
+  dadosDepois Json?         @map("dados_depois")
+  usuarioId   String?       @map("usuario_id") @db.Uuid
+  ipOrigem    String?       @map("ip_origem") @db.Inet
+  criadoEm    DateTime?     @default(now()) @map("criado_em") @db.Timestamptz(6)
+  usuario     Usuario?      @relation(fields: [usuarioId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("auditoria")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model spatial_ref_sys {
+  srid      Int     @id
+  auth_name String? @db.VarChar(256)
+  auth_srid Int?
+  srtext    String? @db.VarChar(2048)
+  proj4text String? @db.VarChar(2048)
+}
+
+enum TipoDocumento {
+  CPF
+  CNPJ
+
+  @@map("tipo_documento_enum")
+}
+
+enum ClienteStatus {
+  ativo
+  suspenso
+  inativo
+
+  @@map("cliente_status_enum")
+}
+
+enum UsuarioStatus {
+  ativo
+  bloqueado
+  pendente
+
+  @@map("usuario_status_enum")
+}
+
+enum TalhaoStatus {
+  ativo
+  inativo
+
+  @@map("talhao_status_enum")
+}
+
+enum JobStatus {
+  pending
+  running
+  succeeded
+  failed
+  canceled
+
+  @@map("job_status_enum")
+}
+
+enum ArtefatoTipo {
+  html
+  geotiff
+  csv
+  png
+  json
+
+  @@map("artefato_tipo_enum")
+}
+
+enum ConsultaStatus {
+  pending
+  success
+  error
+
+  @@map("consulta_status_enum")
+}
+
+enum AuditoriaAcao {
+  insert
+  update
+  delete
+  login
+  logout
+
+  @@map("auditoria_acao_enum")
 }
