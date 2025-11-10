@@ -11,7 +11,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(8080),
   LOG_LEVEL: z.string().default('info'),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL é obrigatório.'),
-  REDIS_URL: z.string().min(1, 'REDIS_URL é obrigatório.'),
+  REDIS_URL: z.string().optional(),
   JWT_ACCESS_SECRET: z.string().min(1, 'JWT_ACCESS_SECRET é obrigatório.'),
   JWT_REFRESH_SECRET: z.string().min(1, 'JWT_REFRESH_SECRET é obrigatório.'),
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
