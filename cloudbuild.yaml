@@ -5,7 +5,7 @@ steps:
       - -f
       - Dockerfile
       - -t
-      - $IMAGE
+      - us-east1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/cana-vision-api/cana-vision-api:$COMMIT_SHA
       - .
 images:
-  - $IMAGE
+  - us-east1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/cana-vision-api/cana-vision-api:$COMMIT_SHA
