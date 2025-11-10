@@ -2,6 +2,12 @@
 
 Este documento consolida as principais decisões e pontos de atenção para iniciar a nova API em Node.js, tomando como base o `Tasks/00_Estruturar.txt`, os relatórios existentes e o estado atual do core em Python (`server.py` e `RELATORIO_MIGRACAO_CORE.md`).
 
+## Status (Nov/2025)
+- Estrutura Express/TypeScript criada com controllers/validators/rotas organizados por domínio.
+- Domínio `auth` já expõe `register`, `login` e `forgot-password` com validações Zod e tokens JWT.
+- Prisma + Supabase operacionais; migrations requerem `postgis` e `uuid-ossp`.
+- Dockerfile compatível com Cloud Build/Cloud Run e `.env.example` documenta todas as variáveis.
+
 ## 00. Tecnologias e stack sugerida
 - **Runtime**: Node.js LTS (>= 20) com TypeScript para tipagem estática.
 - **Framework HTTP**: Express + `express-async-errors` (escolhido para acelerar entrega inicial com equipe enxuta; NestJS fica como opção futura se precisarmos de DI/módulos opinados).
@@ -44,6 +50,7 @@ Este documento consolida as principais decisões e pontos de atenção para inic
 - `auditoria`: rastreamento de alterações e ações relevantes.
 
 ### 02.2 Dicionário de dados (versão inicial)
+> Todos os ambientes precisam habilitar as extensões `postgis` e `"uuid-ossp"` antes de aplicar as migrations.
 #### Tabela `clientes`
 | Campo | Tipo | Chave | Restrições | Descrição |
 | --- | --- | --- | --- | --- |

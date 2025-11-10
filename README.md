@@ -15,20 +15,33 @@ Este diretório abriga a nova API em Node.js + TypeScript usando Express, Zod e 
 ## Setup rápido
 ```bash
 cd api
-cp .env.example .env                # ajuste DATABASE_URL, JWT secrets etc.
+cp .env.example .env                # ajuste DATABASE_URL, JWT_* e demais variáveis
 npm install
 npm run prisma:generate             # gera o client tipado
 # Opcional: executar migrações com prisma migrate ou db push
 npm run dev                         # inicia o servidor em modo watch
 ```
 
-### Prisma + banco (Supabase/Postgres)
-1. Garanta que o schema do banco foi criado (via `prisma migrate dev` ou aplicando o SQL equivalente no Supabase).
-2. Atualize `DATABASE_URL` no `.env` com as credenciais do Supabase.
-3. `npm run prisma:generate` para manter o client sincronizado quando o schema mudar.
-4. Use `npm run prisma:migrate` para gerar/aplicar migrations (em ambientes locais) ou `prisma migrate deploy` em produção.
+### Banco (Supabase/PostgreSQL)
+O schema utiliza campos `geometry` e `uuid_generate_v4()`. Em qualquer ambiente novo execute:
 
-Com isso, o repositório `UsuariosRepository` já utiliza o Prisma Client para persistir usuários reais no Postgres.
+```sql
+CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+```
+
+As migrations do Prisma assumem que essas extensões existem. Para desenvolvimento:
+
+```bash
+npm run prisma:migrate dev    # cria/atualiza o schema localmente (interativo)
+```
+
+Para deploy/CI use:
+
+```bash
+npm run prisma:generate
+npx prisma migrate deploy     # aplica apenas migrations existentes
+```
 
 ### Modelo de `.env`
 
@@ -55,3 +68,27 @@ CORE_WORKFLOW_BIN=python server.py
 ```
 
 > Copie este conteúdo para `.env` e ajuste `DATABASE_URL` e os segredos JWT antes de iniciar a API.
+
+### Docker / Cloud Run
+```bash
+# Build e teste local
+docker build -t canavision-api .
+docker run --env-file .env -p 3333:3333 canavision-api
+
+# Build no Cloud Build e deploy no Cloud Run
+gcloud builds submit --tag gcr.io/<PROJECT_ID>/canavision-api .
+gcloud run deploy canavision-api \
+  --image gcr.io/<PROJECT_ID>/canavision-api \
+  --region <REGION> \
+  --port 8080 \
+  --allow-unauthenticated \
+  --set-env-vars "DATABASE_URL=...,REDIS_URL=...,JWT_ACCESS_SECRET=...,JWT_REFRESH_SECRET=..."
+```
+
+Em execução no Cloud Run, **não** force a variável `PORT`: o serviço já injeta `PORT=8080` automaticamente e o `env.PORT` da aplicação acompanhará o valor correto.
+
+### Status atual (Nov/2025)
+- Endpoints `POST /auth/register`, `POST /auth/login` e `POST /auth/forgot-password` prontos (ver `docs/endpoints.md`).
+- Prisma conectado ao Postgres Supabase com migrations versionadas em `prisma/migrations`.
+- Dockerfile compatível com Cloud Build/Cloud Run (instala dependências, roda `prisma generate` e `npm run build`).
+- `.env.example` documenta todas as variáveis necessárias para desenvolvimento/produção.

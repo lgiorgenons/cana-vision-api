@@ -65,7 +65,11 @@
   ```
 - **Observações**:
   - Sempre retorna 200 para não expor usuários existentes.
-  - `resetToken` só é retornado fora de produção para facilitar testes.
+  - `resetToken` só é retornado fora de produção para facilitar testes (útil para testar o endpoint seguinte).
+
+### POST `/auth/reset-password` _(em desenvolvimento)_
+- **Objetivo**: receber `token` + `password` e concretizar a redefinição.
+- **Status**: pendente (depende de template de e-mail e fila de notificações).
 
 ## Saúde (`/api/health`)
 - **GET `/health`**
@@ -74,3 +78,15 @@
     ```json
     { "status": "ok" }
     ```
+
+## Notas de uso
+- Todos os endpoints vivem sob `/api`, portanto a URL base é `https://<host>/api/...` (ex.: Cloud Run `https://canavision-api-XXXX.a.run.app/api/auth/login`).
+- Autenticação posterior aos fluxos acima seguirá o padrão `Authorization: Bearer <accessToken>`.
+- Revise sempre o `.env` para garantir que as variáveis JWT e o `DATABASE_URL` utilizados localmente sejam equivalentes aos de produção.
+
+## Próximos endpoints planejados
+- `POST /auth/reset-password`
+- `POST /auth/refresh-token`
+- `POST /auth/logout`
+- CRUDs de `clientes`, `propriedades`, `talhoes`
+- `/api/jobs` para acionar o pipeline core
