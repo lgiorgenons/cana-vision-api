@@ -3,7 +3,7 @@ steps:
     args:
       - build
       - -f
-      - api/Dockerfile
+      - Dockerfile
       - -t
       - $IMAGE
       - api
