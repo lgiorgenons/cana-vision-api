@@ -6,6 +6,6 @@ steps:
       - Dockerfile
       - -t
       - $IMAGE
-      - api
+      - .
 images:
   - $IMAGE
