@@ -13,5 +13,7 @@ WORKDIR /usr/src/app
 ENV NODE_ENV=production
 COPY --from=base /usr/src/app/node_modules ./node_modules
 COPY --from=base /usr/src/app/dist ./dist
+COPY --from=base /usr/src/app/tsconfig.json ./tsconfig.json
+COPY --from=base /usr/src/app/tsconfig.build.json ./tsconfig.build.json
 COPY package.json ./
 CMD ["node", "-r", "tsconfig-paths/register", "dist/server.js"]
