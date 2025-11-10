@@ -1,1 +1,10 @@
-// TODO: bootstrap HTTP server e inicializar filas/workers.
+import { env } from '@config/env';
+import { logger } from '@config/logger';
+
+import { app } from './app';
+
+const port = env.PORT;
+
+app.listen(port, () => {
+  logger.info(`Atmos API escutando na porta ${port}`);
+});

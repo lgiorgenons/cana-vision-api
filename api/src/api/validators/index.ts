@@ -1,1 +1,1 @@
-// TODO: expor validadores reutilizáveis.
+export * from './auth/auth.validator';

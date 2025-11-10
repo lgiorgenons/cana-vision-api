@@ -1,1 +1,3 @@
-// TODO: expor cliente Prisma e helpers de transação.
+import { PrismaClient } from '@prisma/client';
+
+export const prisma = new PrismaClient();

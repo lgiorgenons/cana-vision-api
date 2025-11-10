@@ -1,1 +1,1 @@
-// TODO: exportar repositórios concretos.
+export * from './usuarios/usuarios.repository';

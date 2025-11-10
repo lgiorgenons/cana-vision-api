@@ -23,6 +23,7 @@
       "@dtos/*": ["dtos/*"],
       "@domain/*": ["domain/*"],
       "@common/*": ["common/*"],
+      "@middlewares/*": ["middlewares/*"],
       "@utils/*": ["utils/*"]
     }
   },

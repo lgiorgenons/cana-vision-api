@@ -1,1 +1,1 @@
-// TODO: exportar controladores organizados por domínio.
+export * from './auth/auth.controller';
