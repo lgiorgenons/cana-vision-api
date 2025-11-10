@@ -29,3 +29,29 @@ npm run dev                         # inicia o servidor em modo watch
 4. Use `npm run prisma:migrate` para gerar/aplicar migrations (em ambientes locais) ou `prisma migrate deploy` em produção.
 
 Com isso, o repositório `UsuariosRepository` já utiliza o Prisma Client para persistir usuários reais no Postgres.
+
+### Modelo de `.env`
+
+```dotenv
+# Runtime
+NODE_ENV=development
+PORT=8080
+LOG_LEVEL=info
+
+# Banco de dados (exemplo Supabase com SSL obrigatório)
+DATABASE_URL=...
+# REDIS_URL=redis://localhost:6379/0
+
+# Autenticação
+JWT_ACCESS_SECRET=change-me-access
+JWT_REFRESH_SECRET=change-me-refresh
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+RESET_TOKEN_EXPIRES_MINUTES=60
+
+# Integrações externas
+SICAR_API_BASE=https://www.car.gov.br/public/api
+CORE_WORKFLOW_BIN=python server.py
+```
+
+> Copie este conteúdo para `.env` e ajuste `DATABASE_URL` e os segredos JWT antes de iniciar a API.

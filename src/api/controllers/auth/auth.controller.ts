@@ -30,16 +30,6 @@ class AuthController {
     }
   };
 
-  menu = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const payload = registerSchema.parse(req.body);
-      const response = "Caio viadinho";
-      return res.status(201).json(response);
-    } catch (error) {
-      return next(error);
-    }
-  };
-
   forgotPassword = async (
     req: Request,
     res: Response,
