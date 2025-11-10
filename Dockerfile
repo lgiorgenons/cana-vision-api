@@ -1,8 +1,11 @@
 FROM node:20-slim AS base
+ARG DATABASE_URL="postgresql://postgres:postgres@localhost:5432/atmos?schema=public"
+ENV DATABASE_URL="${DATABASE_URL}"
 WORKDIR /usr/src/app
 COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
 RUN npm install --production=false || true
 COPY . .
+RUN npm run prisma:generate
 RUN npm run build
 
 FROM node:20-slim
