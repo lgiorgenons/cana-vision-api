@@ -11,6 +11,6 @@ export interface Usuario {
   passwordHash: string;
   resetTokenHash?: string | null;
   resetTokenExpiresAt?: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 }

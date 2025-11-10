@@ -1,7 +1,10 @@
 import { config } from 'dotenv-flow';
+import type { SignOptions } from 'jsonwebtoken';
 import { z } from 'zod';
 
 config({ silent: true });
+
+type JwtExpires = NonNullable<SignOptions['expiresIn']>;
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -18,5 +21,17 @@ const envSchema = z.object({
   CORE_WORKFLOW_BIN: z.string().optional(),
 });
 
-export const env = envSchema.parse(process.env);
+const parsedEnv = envSchema.parse(process.env);
+type ParsedEnv = typeof parsedEnv;
+type EnvWithJwt = Omit<ParsedEnv, 'JWT_ACCESS_EXPIRES_IN' | 'JWT_REFRESH_EXPIRES_IN'> & {
+  JWT_ACCESS_EXPIRES_IN: JwtExpires;
+  JWT_REFRESH_EXPIRES_IN: JwtExpires;
+};
+
+export const env: EnvWithJwt = {
+  ...parsedEnv,
+  JWT_ACCESS_EXPIRES_IN: parsedEnv.JWT_ACCESS_EXPIRES_IN as JwtExpires,
+  JWT_REFRESH_EXPIRES_IN: parsedEnv.JWT_REFRESH_EXPIRES_IN as JwtExpires,
+};
+
 export type Env = typeof env;

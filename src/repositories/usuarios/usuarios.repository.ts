@@ -89,9 +89,9 @@ class PrismaUsuariosRepository implements UsuariosRepository {
       clienteId: record.clienteId,
       passwordHash: record.passwordHash,
       resetTokenHash: record.resetTokenHash,
-      resetTokenExpiresAt: record.resetTokenExpiresAt ?? undefined,
-      createdAt: record.createdAt,
-      updatedAt: record.updatedAt,
+      resetTokenExpiresAt: record.resetTokenExpiresAt ?? null,
+      createdAt: record.createdAt ?? null,
+      updatedAt: record.updatedAt ?? null,
     };
   }
 }
