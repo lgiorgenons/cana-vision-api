@@ -14,4 +14,4 @@ ENV NODE_ENV=production
 COPY --from=base /usr/src/app/node_modules ./node_modules
 COPY --from=base /usr/src/app/dist ./dist
 COPY package.json ./
-CMD ["node", "dist/server.js"]
+CMD ["node", "-r", "tsconfig-paths/register", "dist/server.js"]
