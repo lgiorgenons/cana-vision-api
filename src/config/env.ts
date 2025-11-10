@@ -8,7 +8,7 @@ type JwtExpires = NonNullable<SignOptions['expiresIn']>;
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.coerce.number().default(3333),
+  PORT: z.coerce.number().default(8080),
   LOG_LEVEL: z.string().default('info'),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL é obrigatório.'),
   REDIS_URL: z.string().min(1, 'REDIS_URL é obrigatório.'),

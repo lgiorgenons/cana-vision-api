@@ -4,7 +4,7 @@ services:
     build: .
     command: npm run dev
     ports:
-      - "3333:3333"
+      - "8080:8080"
     env_file:
       - .env.example
     volumes:
