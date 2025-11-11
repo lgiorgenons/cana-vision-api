@@ -13,6 +13,13 @@ export function errorHandler(
   res: Response,
   _next: NextFunction,
 ) {
+  if (isBodyParserSyntaxError(err)) {
+    return res.status(400).json({
+      message:
+        'JSON inválido. Garanta um corpo bem formado com Content-Type "application/json".',
+    });
+  }
+
   if (err instanceof ZodError) {
     const details = err.flatten();
     const message = 'Erro de validação.';
@@ -30,4 +37,13 @@ export function errorHandler(
 
   logger.error({ err }, 'Erro inesperado.');
   return res.status(500).json({ message: 'Erro interno do servidor.' });
+}
+
+function isBodyParserSyntaxError(
+  err: unknown,
+): err is SyntaxError & { status: number } {
+  return (
+    err instanceof SyntaxError &&
+    typeof (err as { status?: unknown }).status === 'number'
+  );
 }
