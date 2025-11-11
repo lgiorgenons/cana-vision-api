@@ -75,6 +75,16 @@ CORE_WORKFLOW_BIN=python server.py
 docker build -t canavision-api .
 docker run --env-file .env -p 3333:3333 canavision-api
 
+# Ciclo rápido (VM ou servidor dedicado)
+docker stop canavision-api && docker rm canavision-api 2>/dev/null || true
+docker build -t canavision-api:latest .
+docker run -d --name canavision-api \
+  --restart unless-stopped \
+  --env-file /caminho/para/.env \
+  -p 8080:8080 \
+  canavision-api:latest
+docker logs -f canavision-api
+
 # Build no Cloud Build e deploy no Cloud Run
 gcloud builds submit --tag gcr.io/<PROJECT_ID>/canavision-api .
 gcloud run deploy canavision-api \
@@ -88,7 +98,7 @@ gcloud run deploy canavision-api \
 Em execução no Cloud Run, **não** force a variável `PORT`: o serviço já injeta `PORT=8080` automaticamente e o `env.PORT` da aplicação acompanhará o valor correto.
 
 ### Status atual (Nov/2025)
-- Endpoints `POST /auth/register`, `POST /auth/login` e `POST /auth/forgot-password` prontos (ver `docs/endpoints.md`).
+- Fluxo completo de autenticação (`register`, `login`, `forgot-password`, `reset-password`, `refresh-token`, `logout`) pronto (ver `docs/endpoints.md`).
 - Prisma conectado ao Postgres Supabase com migrations versionadas em `prisma/migrations`.
 - Dockerfile compatível com Cloud Build/Cloud Run (instala dependências, roda `prisma generate` e `npm run build`).
 - `.env.example` documenta todas as variáveis necessárias para desenvolvimento/produção.

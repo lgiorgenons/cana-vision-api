@@ -30,6 +30,7 @@ export interface UpdateUsuarioInput {
 export interface UsuariosRepository {
   create(data: CreateUsuarioInput): Promise<UsuarioEntity>;
   findByEmail(email: string): Promise<UsuarioEntity | null>;
+  findById(id: string): Promise<UsuarioEntity | null>;
   update(id: string, data: UpdateUsuarioInput): Promise<UsuarioEntity>;
 }
 
@@ -52,6 +53,18 @@ class PrismaUsuariosRepository implements UsuariosRepository {
   async findByEmail(email: string): Promise<UsuarioEntity | null> {
     const record = await prisma.usuario.findUnique({
       where: { email },
+    });
+
+    if (!record) {
+      return null;
+    }
+
+    return this.toDomain(record);
+  }
+
+  async findById(id: string): Promise<UsuarioEntity | null> {
+    const record = await prisma.usuario.findUnique({
+      where: { id },
     });
 
     if (!record) {

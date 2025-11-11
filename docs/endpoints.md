@@ -65,11 +65,53 @@
   ```
 - **Observações**:
   - Sempre retorna 200 para não expor usuários existentes.
-  - `resetToken` só é retornado fora de produção para facilitar testes (útil para testar o endpoint seguinte).
+  - `resetToken` só é retornado fora de produção para facilitar testes (útil para testar o endpoint seguinte). O formato enviado é `<userId>.<token>`.
 
-### POST `/auth/reset-password` _(em desenvolvimento)_
-- **Objetivo**: receber `token` + `password` e concretizar a redefinição.
-- **Status**: pendente (depende de template de e-mail e fila de notificações).
+### POST `/auth/reset-password`
+- **Descrição**: aplica uma nova senha usando o token recebido no passo anterior.
+- **Body**:
+  ```json
+  {
+    "token": "string (formato <userId>.<token>)",
+    "password": "string (min 8)"
+  }
+  ```
+- **Resposta 200**:
+  ```json
+  {
+    "message": "Senha redefinida com sucesso."
+  }
+  ```
+- **Erros comuns**:
+  - 400 token inválido ou expirado.
+  - 400 payload inválido.
+
+### POST `/auth/refresh-token`
+- **Descrição**: gera novo par de tokens a partir de um refresh token válido.
+- **Body**:
+  ```json
+  {
+    "refreshToken": "jwt"
+  }
+  ```
+- **Resposta 200**: mesmo formato do `POST /auth/login`.
+- **Erros**:
+  - 401 refresh token inválido ou usuário inativo.
+
+### POST `/auth/logout`
+- **Descrição**: encerra a sessão atual. Aceita (opcionalmente) o refresh token para futura revogação/telemetria.
+- **Body (opcional)**:
+  ```json
+  {
+    "refreshToken": "jwt"
+  }
+  ```
+- **Resposta 200**:
+  ```json
+  {
+    "message": "Logout realizado com sucesso."
+  }
+  ```
 
 ## Saúde (`/api/health`)
 - **GET `/health`**
@@ -85,8 +127,5 @@
 - Revise sempre o `.env` para garantir que as variáveis JWT e o `DATABASE_URL` utilizados localmente sejam equivalentes aos de produção.
 
 ## Próximos endpoints planejados
-- `POST /auth/reset-password`
-- `POST /auth/refresh-token`
-- `POST /auth/logout`
 - CRUDs de `clientes`, `propriedades`, `talhoes`
 - `/api/jobs` para acionar o pipeline core

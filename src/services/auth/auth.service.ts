@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 
 import { compare, hash } from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { type JwtPayload } from 'jsonwebtoken';
 
 import {
   ConflictError,
@@ -14,11 +14,17 @@ import type {
   ForgotPasswordDTO,
   ForgotPasswordResponse,
   LoginDTO,
+  LogoutDTO,
+  LogoutResponse,
+  RefreshTokenDTO,
   RegisterDTO,
+  ResetPasswordDTO,
+  ResetPasswordResponse,
 } from '@dtos/auth/auth.dto';
 import type { UsuariosRepository } from '@repositories/usuarios/usuarios.repository';
 
 const DEFAULT_ROLE = 'cliente' as const;
+const RESET_TOKEN_SEPARATOR = '.';
 
 export class AuthService {
   constructor(private readonly usuariosRepository: UsuariosRepository) {}
@@ -52,6 +58,8 @@ export class AuthService {
     if (!usuario) {
       throw new UnauthorizedError('Credenciais inválidas.');
     }
+
+    this.ensureUserIsActive(usuario);
 
     const passwordMatches = await compare(
       payload.password,
@@ -94,8 +102,72 @@ export class AuthService {
     return {
       message:
         'Se o e-mail estiver cadastrado, enviaremos instruções para redefinir a senha.',
-      ...(env.NODE_ENV !== 'production' ? { resetToken: rawToken } : {}),
+      ...(env.NODE_ENV !== 'production'
+        ? { resetToken: this.composeResetToken(usuario.id, rawToken) }
+        : {}),
     };
+  }
+
+  async resetPassword(
+    payload: ResetPasswordDTO,
+  ): Promise<ResetPasswordResponse> {
+    const { userId, tokenPart } = this.parseResetToken(payload.token);
+    const usuario = await this.usuariosRepository.findById(userId);
+
+    if (
+      !usuario ||
+      !usuario.resetTokenHash ||
+      !usuario.resetTokenExpiresAt
+    ) {
+      throw new UnauthorizedError('Token de redefinição inválido.');
+    }
+
+    const isExpired = usuario.resetTokenExpiresAt.getTime() < Date.now();
+    if (isExpired) {
+      throw new UnauthorizedError('Token de redefinição expirado.');
+    }
+
+    const tokenMatches = await compare(tokenPart, usuario.resetTokenHash);
+    if (!tokenMatches) {
+      throw new UnauthorizedError('Token de redefinição inválido.');
+    }
+
+    const passwordHash = await hash(payload.password, 10);
+    await this.usuariosRepository.update(usuario.id, {
+      passwordHash,
+      resetTokenHash: null,
+      resetTokenExpiresAt: null,
+    });
+
+    return { message: 'Senha redefinida com sucesso.' };
+  }
+
+  async refreshTokens(payload: RefreshTokenDTO): Promise<AuthResponse> {
+    const decoded = this.verifyRefreshToken(payload.refreshToken);
+    const usuario = await this.usuariosRepository.findById(decoded.sub);
+
+    if (!usuario) {
+      throw new UnauthorizedError('Refresh token inválido.');
+    }
+
+    this.ensureUserIsActive(usuario);
+
+    return {
+      user: this.presentUser(usuario),
+      tokens: this.generateTokens(usuario),
+    };
+  }
+
+  async logout(payload: LogoutDTO): Promise<LogoutResponse> {
+    if (payload.refreshToken) {
+      try {
+        this.verifyRefreshToken(payload.refreshToken);
+      } catch {
+        // Não propagamos erro de logout para evitar vazamento de informações.
+      }
+    }
+
+    return { message: 'Logout realizado com sucesso.' };
   }
 
   private presentUser(usuario: Usuario) {
@@ -123,5 +195,39 @@ export class AuthService {
     });
 
     return { accessToken, refreshToken };
+  }
+
+  private composeResetToken(userId: string, token: string) {
+    return `${userId}${RESET_TOKEN_SEPARATOR}${token}`;
+  }
+
+  private parseResetToken(token: string) {
+    const [userId, tokenPart] = token.split(RESET_TOKEN_SEPARATOR);
+    if (!userId || !tokenPart) {
+      throw new UnauthorizedError('Token de redefinição inválido.');
+    }
+
+    return { userId, tokenPart };
+  }
+
+  private ensureUserIsActive(usuario: Usuario) {
+    if (usuario.status !== 'ativo') {
+      throw new UnauthorizedError('Usuário inativo ou bloqueado.');
+    }
+  }
+
+  private verifyRefreshToken(token: string) {
+    try {
+      const decoded = jwt.verify(
+        token,
+        env.JWT_REFRESH_SECRET,
+      ) as JwtPayload & { sub: string };
+      if (!decoded?.sub) {
+        throw new UnauthorizedError('Refresh token inválido.');
+      }
+      return decoded;
+    } catch {
+      throw new UnauthorizedError('Refresh token inválido.');
+    }
   }
 }

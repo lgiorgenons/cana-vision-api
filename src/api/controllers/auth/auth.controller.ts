@@ -4,6 +4,9 @@ import {
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
+  resetPasswordSchema,
+  refreshTokenSchema,
+  logoutSchema,
 } from '@api/validators/auth/auth.validator';
 import { authService } from '@services/index';
 
@@ -38,6 +41,44 @@ class AuthController {
     try {
       const payload = forgotPasswordSchema.parse(req.body);
       const response = await this.service.requestPasswordReset(payload);
+      return res.status(200).json(response);
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  resetPassword = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const payload = resetPasswordSchema.parse(req.body);
+      const response = await this.service.resetPassword(payload);
+      return res.status(200).json(response);
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  refreshToken = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const payload = refreshTokenSchema.parse(req.body);
+      const response = await this.service.refreshTokens(payload);
+      return res.status(200).json(response);
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  logout = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const payload = logoutSchema.parse(req.body ?? {});
+      const response = await this.service.logout(payload);
       return res.status(200).json(response);
     } catch (error) {
       return next(error);

@@ -17,6 +17,19 @@ export interface ForgotPasswordDTO {
   email: string;
 }
 
+export interface ResetPasswordDTO {
+  token: string;
+  password: string;
+}
+
+export interface RefreshTokenDTO {
+  refreshToken: string;
+}
+
+export interface LogoutDTO {
+  refreshToken?: string;
+}
+
 export interface AuthUserDTO {
   id: string;
   nome: string;
@@ -38,4 +51,12 @@ export interface AuthResponse {
 export interface ForgotPasswordResponse {
   message: string;
   resetToken?: string;
+}
+
+export interface ResetPasswordResponse {
+  message: string;
+}
+
+export interface LogoutResponse {
+  message: string;
 }
