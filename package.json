@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only --files -r tsconfig-paths/register src/server.ts",
     "build": "tsc -p tsconfig.build.json",
-    "start": "node -r tsconfig-paths/register dist/server.js",
+    "start": "node -r ./tsconfig-paths-bootstrap dist/server.js",
     "lint": "eslint \"src/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "jest",
