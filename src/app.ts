@@ -1,5 +1,5 @@
 import cors from 'cors';
-import express from 'express';
+import express, { type Request, type Response } from 'express';
 import helmet from 'helmet';
 
 import { routes } from '@api/routes';
@@ -7,6 +7,11 @@ import { errorHandler } from '@middlewares/error-handler.middleware';
 
 const app = express();
 const METHODS_REQUIRING_JSON = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+const captureRawJson = (req: Request, _res: Response, buffer: Buffer) => {
+  if (buffer?.length) {
+    req.rawBody = buffer.toString('utf-8');
+  }
+};
 
 app.use(helmet());
 app.use(cors());
@@ -29,7 +34,7 @@ app.use((req, res, next) => {
       'Content-Type "application/json" é obrigatório para este endpoint.',
   });
 });
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '2mb', verify: captureRawJson }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/api', routes);

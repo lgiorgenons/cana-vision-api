@@ -9,11 +9,22 @@ import { logger } from '@config/logger';
 
 export function errorHandler(
   err: unknown,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction,
 ) {
   if (isBodyParserSyntaxError(err)) {
+    logger.warn(
+      {
+        err,
+        headers: {
+          'content-type': req.headers['content-type'],
+          'content-length': req.headers['content-length'],
+        },
+        rawBody: req.rawBody,
+      },
+      'JSON inválido recebido.',
+    );
     return res.status(400).json({
       message:
         'JSON inválido. Garanta um corpo bem formado com Content-Type "application/json".',
