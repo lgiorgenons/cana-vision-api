@@ -3,6 +3,8 @@ import express, { type Request, type Response } from 'express';
 import helmet from 'helmet';
 
 import { routes } from '@api/routes';
+import { env } from '@config/env';
+import { logger } from '@config/logger';
 import { errorHandler } from '@middlewares/error-handler.middleware';
 
 const app = express();
@@ -36,6 +38,22 @@ app.use((req, res, next) => {
 });
 app.use(express.json({ limit: '2mb', verify: captureRawJson }));
 app.use(express.urlencoded({ extended: true }));
+
+if (env.DEBUG_REQUEST_LOGS) {
+  app.use((req, _res, next) => {
+    if (req.is('application/json') && req.rawBody) {
+      logger.debug(
+        {
+          method: req.method,
+          url: req.originalUrl,
+          rawBody: req.rawBody,
+        },
+        'JSON recebido (debug).',
+      );
+    }
+    next();
+  });
+}
 
 app.use('/api', routes);
 

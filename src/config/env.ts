@@ -10,6 +10,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().default(8080),
   LOG_LEVEL: z.string().default('info'),
+  DEBUG_REQUEST_LOGS: z.coerce.boolean().default(false),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL é obrigatório.'),
   REDIS_URL: z.string().optional(),
   JWT_ACCESS_SECRET: z.string().min(1, 'JWT_ACCESS_SECRET é obrigatório.'),
