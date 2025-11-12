@@ -4,7 +4,7 @@ Este documento consolida as principais decisões e pontos de atenção para inic
 
 ## Status (Nov/2025)
 - Estrutura Express/TypeScript criada com controllers/validators/rotas organizados por domínio.
-- Domínio `auth` já expõe `register`, `login` e `forgot-password` com validações Zod e tokens JWT.
+- Domínio `auth` já expõe `register`, `login` e `forgot-password` com validações Zod delegando todo o ciclo de credenciais ao Supabase Auth (sem JWT local).
 - Prisma + Supabase operacionais; migrations requerem `postgis` e `uuid-ossp`.
 - Dockerfile compatível com Cloud Build/Cloud Run e `.env.example` documenta todas as variáveis.
 
@@ -12,7 +12,7 @@ Este documento consolida as principais decisões e pontos de atenção para inic
 - **Runtime**: Node.js LTS (>= 20) com TypeScript para tipagem estática.
 - **Framework HTTP**: Express + `express-async-errors` (escolhido para acelerar entrega inicial com equipe enxuta; NestJS fica como opção futura se precisarmos de DI/módulos opinados).
 - **ORM/Query Builder**: Prisma (PostgreSQL como base primária), com migrations versionadas.
-- **Autenticação**: JWT (access/refresh) com Bcrypt para senha; integração futura com Auth0/Keycloak se necessário.
+- **Autenticação**: Supabase Auth (signup/signin/reset/refresh via SDK); tokens JWT próprios foram descontinuados.
 - **Documentação**: OpenAPI (Swagger) gerado automaticamente.
 - **Validação**: Zod (camada DTO) ou class-validator (caso NestJS).
 - **Infra**: Docker Compose para orquestrar API + banco; `.env` versionado com `.env.example`.
@@ -373,7 +373,7 @@ Diretrizes gerais:
    - Adicionar middlewares essenciais (CORS, rate limit, central error handler com `express-async-errors`).
    - Docker Compose com Postgres + Redis (para jobs/filas).
    - Prisma (schema baseado na Seção 02) + scripts `prisma migrate dev` / `generate`.
-2. **Autenticação & usuários**: implementação JWT + RBAC + CRUD inicial.
+2. **Autenticação & usuários**: integração Supabase Auth + RBAC + CRUD inicial.
 3. **Módulo clientes/propriedades/talhões**: modelo espacial, integrações GIS básicas.
 4. **Jobs & core integration**: wrappers para pipeline atual, armazenamento de artefatos.
 5. **Alertas e ingestão**: sincronização com core, filtros, notificações.

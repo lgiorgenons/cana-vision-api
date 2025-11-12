@@ -18,7 +18,7 @@ export interface ForgotPasswordDTO {
 }
 
 export interface ResetPasswordDTO {
-  token: string;
+  accessToken: string;
   password: string;
 }
 
@@ -41,6 +41,9 @@ export interface AuthUserDTO {
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
+  expiresIn?: number | null;
+  expiresAt?: string | null;
+  tokenType?: string | null;
 }
 
 export interface AuthResponse {
@@ -50,7 +53,6 @@ export interface AuthResponse {
 
 export interface ForgotPasswordResponse {
   message: string;
-  resetToken?: string;
 }
 
 export interface ResetPasswordResponse {

@@ -8,9 +8,10 @@ export interface Usuario {
   role: UsuarioRole;
   status: UsuarioStatus;
   clienteId?: string | null;
-  passwordHash: string;
-  resetTokenHash?: string | null;
-  resetTokenExpiresAt?: Date | null;
   createdAt: Date | null;
   updatedAt: Date | null;
+  passwordHash?: string | null;
+  resetTokenHash?: string | null;
+  resetTokenExpiresAt?: Date | null;
+  metadata?: Record<string, unknown> | null;
 }

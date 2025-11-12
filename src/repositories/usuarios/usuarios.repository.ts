@@ -1,4 +1,4 @@
-import type { Usuario as PrismaUsuario } from '@prisma/client';
+import type { Prisma, Usuario as PrismaUsuario } from '@prisma/client';
 
 import { prisma } from '@config/prisma';
 import type {
@@ -8,12 +8,14 @@ import type {
 } from '@domain/entities/usuario.entity';
 
 export interface CreateUsuarioInput {
+  id?: string;
   nome: string;
   email: string;
-  passwordHash: string;
   role: UsuarioRole;
   status: UsuarioStatus;
   clienteId?: string | null;
+  passwordHash?: string;
+  metadata?: Prisma.JsonValue | null;
 }
 
 export interface UpdateUsuarioInput {
@@ -25,6 +27,7 @@ export interface UpdateUsuarioInput {
   clienteId?: string | null;
   resetTokenHash?: string | null;
   resetTokenExpiresAt?: Date | null;
+  metadata?: Prisma.JsonValue | null;
 }
 
 export interface UsuariosRepository {
@@ -38,12 +41,14 @@ class PrismaUsuariosRepository implements UsuariosRepository {
   async create(data: CreateUsuarioInput): Promise<UsuarioEntity> {
     const record = await prisma.usuario.create({
       data: {
+        id: data.id,
         nome: data.nome,
         email: data.email,
-        passwordHash: data.passwordHash,
+        passwordHash: data.passwordHash ?? 'supabase-managed',
         roleCodigo: data.role,
         status: data.status,
         clienteId: data.clienteId ?? null,
+        metadata: data.metadata ?? {},
       },
     });
 
@@ -75,18 +80,27 @@ class PrismaUsuariosRepository implements UsuariosRepository {
   }
 
   async update(id: string, data: UpdateUsuarioInput): Promise<UsuarioEntity> {
+    const updateData: Prisma.UsuarioUncheckedUpdateInput = {
+      nome: data.nome,
+      email: data.email,
+      roleCodigo: data.role,
+      status: data.status,
+      clienteId: data.clienteId,
+      resetTokenHash: data.resetTokenHash,
+      resetTokenExpiresAt: data.resetTokenExpiresAt,
+    };
+
+    if (data.passwordHash !== undefined) {
+      updateData.passwordHash = data.passwordHash;
+    }
+
+    if (data.metadata !== undefined) {
+      updateData.metadata = data.metadata ?? {};
+    }
+
     const record = await prisma.usuario.update({
       where: { id },
-      data: {
-        nome: data.nome,
-        email: data.email,
-        passwordHash: data.passwordHash,
-        roleCodigo: data.role,
-        status: data.status,
-        clienteId: data.clienteId,
-        resetTokenHash: data.resetTokenHash,
-        resetTokenExpiresAt: data.resetTokenExpiresAt,
-      },
+      data: updateData,
     });
 
     return this.toDomain(record);
@@ -100,9 +114,10 @@ class PrismaUsuariosRepository implements UsuariosRepository {
       role: (record.roleCodigo ?? 'cliente') as UsuarioRole,
       status: record.status as UsuarioStatus,
       clienteId: record.clienteId,
-      passwordHash: record.passwordHash,
-      resetTokenHash: record.resetTokenHash,
+      passwordHash: record.passwordHash ?? null,
+      resetTokenHash: record.resetTokenHash ?? null,
       resetTokenExpiresAt: record.resetTokenExpiresAt ?? null,
+      metadata: (record.metadata ?? null) as Record<string, unknown> | null,
       createdAt: record.createdAt ?? null,
       updatedAt: record.updatedAt ?? null,
     };

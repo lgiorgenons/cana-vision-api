@@ -15,7 +15,7 @@ Este diretório abriga a nova API em Node.js + TypeScript usando Express, Zod e 
 ## Setup rápido
 ```bash
 cd api
-cp .env.example .env                # ajuste DATABASE_URL, JWT_* e demais variáveis
+cp .env.example .env                # ajuste DATABASE_URL e todos os SUPABASE_*
 npm install
 npm run prisma:generate             # gera o client tipado
 # Opcional: executar migrações com prisma migrate ou db push
@@ -56,19 +56,19 @@ DEBUG_REQUEST_LOGS=false
 DATABASE_URL=...
 # REDIS_URL=redis://localhost:6379/0
 
-# Autenticação
-JWT_ACCESS_SECRET=change-me-access
-JWT_REFRESH_SECRET=change-me-refresh
-JWT_ACCESS_EXPIRES_IN=15m
-JWT_REFRESH_EXPIRES_IN=7d
-RESET_TOKEN_EXPIRES_MINUTES=60
-
 # Integrações externas
 SICAR_API_BASE=https://www.car.gov.br/public/api
 CORE_WORKFLOW_BIN=python server.py
+
+# Supabase Auth
+SUPABASE_URL=https://<your-project>.supabase.co
+SUPABASE_ANON_KEY=change-me-anon
+SUPABASE_SERVICE_ROLE_KEY=change-me-service-role
+SUPABASE_PASSWORD_RESET_REDIRECT=https://app.example.com/reset-password
+SUPABASE_JWT_SECRET=change-me-jwt-secret
 ```
 
-> Copie este conteúdo para `.env` e ajuste `DATABASE_URL` e os segredos JWT antes de iniciar a API. Defina `DEBUG_REQUEST_LOGS=true` apenas em ambientes de debug para registrar o JSON recebido com sucesso.
+> Copie este conteúdo para `.env` e ajuste `DATABASE_URL` + todas as variáveis `SUPABASE_*` antes de iniciar a API. Defina `DEBUG_REQUEST_LOGS=true` apenas em ambientes de debug para registrar o JSON recebido com sucesso.
 
 ### Docker / Cloud Run
 ```bash
@@ -93,13 +93,13 @@ gcloud run deploy canavision-api \
   --region <REGION> \
   --port 8080 \
   --allow-unauthenticated \
-  --set-env-vars "DATABASE_URL=...,REDIS_URL=...,JWT_ACCESS_SECRET=...,JWT_REFRESH_SECRET=..."
+  --set-env-vars "DATABASE_URL=...,SUPABASE_URL=...,SUPABASE_ANON_KEY=...,SUPABASE_SERVICE_ROLE_KEY=...,SUPABASE_PASSWORD_RESET_REDIRECT=...,SUPABASE_JWT_SECRET=...,SICAR_API_BASE=...,CORE_WORKFLOW_BIN=..."
 ```
 
 Em execução no Cloud Run, **não** force a variável `PORT`: o serviço já injeta `PORT=8080` automaticamente e o `env.PORT` da aplicação acompanhará o valor correto.
 
 ### Status atual (Nov/2025)
-- Fluxo completo de autenticação (`register`, `login`, `forgot-password`, `reset-password`, `refresh-token`, `logout`) pronto (ver `docs/endpoints.md`).
+- Fluxo completo de autenticação usa **Supabase Auth** (registro, login, refresh e reset) — o backend apenas orquestra chamadas ao Supabase e sincroniza o usuário no Prisma (`usuarios`).
 - Prisma conectado ao Postgres Supabase com migrations versionadas em `prisma/migrations`.
 - Dockerfile compatível com Cloud Build/Cloud Run (instala dependências, roda `prisma generate` e `npm run build`).
 - `.env.example` documenta todas as variáveis necessárias para desenvolvimento/produção.

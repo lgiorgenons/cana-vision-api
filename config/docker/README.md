@@ -21,7 +21,7 @@ gcloud run deploy canavision-api \
   --region <REGION> \
   --port 8080 \
   --allow-unauthenticated \
-  --set-env-vars "DATABASE_URL=...,REDIS_URL=...,JWT_ACCESS_SECRET=...,JWT_REFRESH_SECRET=..."
+  --set-env-vars "DATABASE_URL=...,SUPABASE_URL=...,SUPABASE_ANON_KEY=...,SUPABASE_SERVICE_ROLE_KEY=...,SUPABASE_PASSWORD_RESET_REDIRECT=...,SUPABASE_JWT_SECRET=...,SICAR_API_BASE=...,CORE_WORKFLOW_BIN=..."
 ```
 
 > Não defina manualmente `PORT` no Cloud Run — o serviço injeta o valor automaticamente e nossa aplicação lê `env.PORT`.
