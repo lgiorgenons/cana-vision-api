@@ -1,14 +1,19 @@
 import { randomBytes } from 'node:crypto';
 
-import { compare, hash } from 'bcryptjs';
+import { hash } from 'bcryptjs';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
+import type { Session, User } from '@supabase/supabase-js';
 
 import {
   ConflictError,
   UnauthorizedError,
 } from '@common/errors/application-error';
 import { env } from '@config/env';
-import type { Usuario } from '@domain/entities/usuario.entity';
+import {
+  supabaseAdminClient,
+  supabaseAuthClient,
+} from '@config/supabase';
+import type { Usuario, UsuarioRole } from '@domain/entities/usuario.entity';
 import type {
   AuthResponse,
   ForgotPasswordDTO,
@@ -23,8 +28,8 @@ import type {
 } from '@dtos/auth/auth.dto';
 import type { UsuariosRepository } from '@repositories/usuarios/usuarios.repository';
 
-const DEFAULT_ROLE = 'cliente' as const;
-const RESET_TOKEN_SEPARATOR = '.';
+const DEFAULT_ROLE: UsuarioRole = 'cliente';
+const SUPABASE_PROVIDER = 'supabase';
 
 export class AuthService {
   constructor(private readonly usuariosRepository: UsuariosRepository) {}
@@ -36,42 +41,65 @@ export class AuthService {
       throw new ConflictError('E-mail já está em uso.');
     }
 
-    const passwordHash = await hash(payload.password, 10);
-    const usuario = await this.usuariosRepository.create({
-      nome: payload.nome,
+    const { data, error } = await supabaseAuthClient.auth.signUp({
       email: normalizedEmail,
-      passwordHash,
+      password: payload.password,
+      options: {
+        data: {
+          nome: payload.nome,
+          role: payload.role ?? DEFAULT_ROLE,
+          clienteId: payload.clienteId ?? null,
+        },
+        emailRedirectTo: env.SUPABASE_PASSWORD_RESET_REDIRECT,
+      },
+    });
+
+    if (error) {
+      throw new ConflictError(
+        error.message ?? 'Não foi possível registrar o usuário no Supabase.',
+      );
+    }
+
+    const supabaseUser = data.user;
+    if (!supabaseUser || !supabaseUser.email) {
+      throw new UnauthorizedError(
+        'Supabase não retornou os dados do usuário recém-criado.',
+      );
+    }
+
+    const usuario = await this.syncLocalUserFromSupabase(supabaseUser, {
+      nome: payload.nome,
       role: payload.role ?? DEFAULT_ROLE,
-      status: 'ativo',
       clienteId: payload.clienteId ?? null,
+      password: payload.password,
     });
 
     return {
       user: this.presentUser(usuario),
-      tokens: this.generateTokens(usuario),
+      tokens: this.presentSessionTokens(data.session ?? undefined),
+      provider: SUPABASE_PROVIDER,
+      requiresEmailConfirmation: !data.session,
     };
   }
 
   async login(payload: LoginDTO): Promise<AuthResponse> {
-    const usuario =
-      await this.usuariosRepository.findByEmail(payload.email.toLowerCase());
-    if (!usuario) {
+    const normalizedEmail = payload.email.toLowerCase();
+    const { data, error } = await supabaseAuthClient.auth.signInWithPassword({
+      email: normalizedEmail,
+      password: payload.password,
+    });
+
+    if (error || !data.user) {
       throw new UnauthorizedError('Credenciais inválidas.');
     }
 
+    const usuario = await this.syncLocalUserFromSupabase(data.user);
     this.ensureUserIsActive(usuario);
-
-    const passwordMatches = await compare(
-      payload.password,
-      usuario.passwordHash,
-    );
-    if (!passwordMatches) {
-      throw new UnauthorizedError('Credenciais inválidas.');
-    }
 
     return {
       user: this.presentUser(usuario),
-      tokens: this.generateTokens(usuario),
+      tokens: this.presentSessionTokens(data.session ?? undefined),
+      provider: SUPABASE_PROVIDER,
     };
   }
 
@@ -79,91 +107,61 @@ export class AuthService {
     payload: ForgotPasswordDTO,
   ): Promise<ForgotPasswordResponse> {
     const normalizedEmail = payload.email.toLowerCase();
-    const usuario = await this.usuariosRepository.findByEmail(normalizedEmail);
-
-    if (!usuario) {
-      return {
-        message:
-          'Se o e-mail estiver cadastrado, enviaremos instruções para redefinir a senha.',
-      };
-    }
-
-    const rawToken = randomBytes(32).toString('hex');
-    const resetTokenHash = await hash(rawToken, 10);
-    const expiresAt = new Date(
-      Date.now() + env.RESET_TOKEN_EXPIRES_MINUTES * 60 * 1000,
-    );
-
-    await this.usuariosRepository.update(usuario.id, {
-      resetTokenHash,
-      resetTokenExpiresAt: expiresAt,
+    await supabaseAuthClient.auth.resetPasswordForEmail(normalizedEmail, {
+      redirectTo: env.SUPABASE_PASSWORD_RESET_REDIRECT,
     });
 
     return {
       message:
         'Se o e-mail estiver cadastrado, enviaremos instruções para redefinir a senha.',
-      ...(env.NODE_ENV !== 'production'
-        ? { resetToken: this.composeResetToken(usuario.id, rawToken) }
-        : {}),
     };
   }
 
   async resetPassword(
     payload: ResetPasswordDTO,
   ): Promise<ResetPasswordResponse> {
-    const { userId, tokenPart } = this.parseResetToken(payload.token);
-    const usuario = await this.usuariosRepository.findById(userId);
-
-    if (
-      !usuario ||
-      !usuario.resetTokenHash ||
-      !usuario.resetTokenExpiresAt
-    ) {
-      throw new UnauthorizedError('Token de redefinição inválido.');
-    }
-
-    const isExpired = usuario.resetTokenExpiresAt.getTime() < Date.now();
-    if (isExpired) {
-      throw new UnauthorizedError('Token de redefinição expirado.');
-    }
-
-    const tokenMatches = await compare(tokenPart, usuario.resetTokenHash);
-    if (!tokenMatches) {
-      throw new UnauthorizedError('Token de redefinição inválido.');
-    }
+    const decoded = this.decodeSupabaseToken(payload.token);
+    await supabaseAdminClient.auth.admin.updateUserById(decoded.sub, {
+      password: payload.password,
+    });
 
     const passwordHash = await hash(payload.password, 10);
-    await this.usuariosRepository.update(usuario.id, {
+    await this.usuariosRepository.update(decoded.sub, {
       passwordHash,
       resetTokenHash: null,
       resetTokenExpiresAt: null,
+      status: 'ativo',
     });
 
     return { message: 'Senha redefinida com sucesso.' };
   }
 
   async refreshTokens(payload: RefreshTokenDTO): Promise<AuthResponse> {
-    const decoded = this.verifyRefreshToken(payload.refreshToken);
-    const usuario = await this.usuariosRepository.findById(decoded.sub);
+    const { data, error } = await supabaseAuthClient.auth.refreshSession({
+      refresh_token: payload.refreshToken,
+    });
 
-    if (!usuario) {
+    if (error || !data.session || !data.session.user) {
       throw new UnauthorizedError('Refresh token inválido.');
     }
 
+    const usuario = await this.syncLocalUserFromSupabase(data.session.user);
     this.ensureUserIsActive(usuario);
 
     return {
       user: this.presentUser(usuario),
-      tokens: this.generateTokens(usuario),
+      tokens: this.presentSessionTokens(data.session),
+      provider: SUPABASE_PROVIDER,
     };
   }
 
   async logout(payload: LogoutDTO): Promise<LogoutResponse> {
     if (payload.refreshToken) {
       try {
-        this.verifyRefreshToken(payload.refreshToken);
+        const decoded = this.decodeSupabaseToken(payload.refreshToken);
+        await supabaseAdminClient.auth.admin.signOut(decoded.sub);
       } catch {
-        // Não propagamos erro de logout para evitar vazamento de informações.
+        // Ignora erros no logout para não expor detalhes.
       }
     }
 
@@ -180,54 +178,85 @@ export class AuthService {
     };
   }
 
-  private generateTokens(usuario: Usuario) {
-    const payload = {
-      sub: usuario.id,
-      role: usuario.role,
-      clienteId: usuario.clienteId ?? null,
-    };
-
-    const accessToken = jwt.sign(payload, env.JWT_ACCESS_SECRET, {
-      expiresIn: env.JWT_ACCESS_EXPIRES_IN,
-    });
-    const refreshToken = jwt.sign(payload, env.JWT_REFRESH_SECRET, {
-      expiresIn: env.JWT_REFRESH_EXPIRES_IN,
-    });
-
-    return { accessToken, refreshToken };
-  }
-
-  private composeResetToken(userId: string, token: string) {
-    return `${userId}${RESET_TOKEN_SEPARATOR}${token}`;
-  }
-
-  private parseResetToken(token: string) {
-    const [userId, tokenPart] = token.split(RESET_TOKEN_SEPARATOR);
-    if (!userId || !tokenPart) {
-      throw new UnauthorizedError('Token de redefinição inválido.');
+  private presentSessionTokens(session?: Session | null) {
+    if (!session) {
+      return undefined;
     }
 
-    return { userId, tokenPart };
+    return {
+      accessToken: session.access_token,
+      refreshToken: session.refresh_token,
+      expiresAt: session.expires_at ?? undefined,
+      tokenType: session.token_type,
+    };
+  }
+
+  private async syncLocalUserFromSupabase(
+    supabaseUser: User,
+    fallback?: {
+      nome?: string;
+      role?: UsuarioRole;
+      clienteId?: string | null;
+      password?: string;
+    },
+  ): Promise<Usuario> {
+    const email = supabaseUser.email?.toLowerCase();
+    if (!email) {
+      throw new UnauthorizedError('Usuário do Supabase sem e-mail associado.');
+    }
+
+    const existing = await this.usuariosRepository.findByEmail(email);
+    const status = supabaseUser.email_confirmed_at ? 'ativo' : 'pendente';
+
+    if (existing) {
+      if (existing.status !== status) {
+        return this.usuariosRepository.update(existing.id, { status });
+      }
+      return existing;
+    }
+
+    const passwordSource =
+      fallback?.password ?? randomBytes(32).toString('hex');
+    const passwordHash = await hash(passwordSource, 10);
+
+    return this.usuariosRepository.create({
+      id: supabaseUser.id,
+      nome:
+        (supabaseUser.user_metadata?.nome as string) ??
+        fallback?.nome ??
+        email,
+      email,
+      passwordHash,
+      role:
+        (supabaseUser.user_metadata?.role as UsuarioRole) ??
+        fallback?.role ??
+        DEFAULT_ROLE,
+      status,
+      clienteId:
+        (supabaseUser.user_metadata?.clienteId as string | null) ??
+        fallback?.clienteId ??
+        null,
+    });
   }
 
   private ensureUserIsActive(usuario: Usuario) {
     if (usuario.status !== 'ativo') {
-      throw new UnauthorizedError('Usuário inativo ou bloqueado.');
+      throw new UnauthorizedError('Usuário inativo ou pendente de confirmação.');
     }
   }
 
-  private verifyRefreshToken(token: string) {
+  private decodeSupabaseToken(token: string) {
     try {
       const decoded = jwt.verify(
         token,
-        env.JWT_REFRESH_SECRET,
+        env.SUPABASE_JWT_SECRET,
       ) as JwtPayload & { sub: string };
       if (!decoded?.sub) {
-        throw new UnauthorizedError('Refresh token inválido.');
+        throw new UnauthorizedError('Token inválido.');
       }
       return decoded;
     } catch {
-      throw new UnauthorizedError('Refresh token inválido.');
+      throw new UnauthorizedError('Token inválido.');
     }
   }
 }

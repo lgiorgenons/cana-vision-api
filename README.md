@@ -51,6 +51,11 @@ NODE_ENV=development
 PORT=8080
 LOG_LEVEL=info
 DEBUG_REQUEST_LOGS=false
+SUPABASE_URL=https://<PROJECT>.supabase.co
+SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+SUPABASE_PASSWORD_RESET_REDIRECT=https://app.example.com/auth/callback
+SUPABASE_JWT_SECRET=...
 
 # Banco de dados (exemplo Supabase com SSL obrigatório)
 DATABASE_URL=...
@@ -68,7 +73,7 @@ SICAR_API_BASE=https://www.car.gov.br/public/api
 CORE_WORKFLOW_BIN=python server.py
 ```
 
-> Copie este conteúdo para `.env` e ajuste `DATABASE_URL` e os segredos JWT antes de iniciar a API. Defina `DEBUG_REQUEST_LOGS=true` apenas em ambientes de debug para registrar o JSON recebido com sucesso.
+> Copie este conteúdo para `.env` e ajuste `DATABASE_URL`, credenciais Supabase e os segredos JWT antes de iniciar a API. Defina `DEBUG_REQUEST_LOGS=true` apenas em ambientes de debug para registrar o JSON recebido com sucesso.
 
 ### Docker / Cloud Run
 ```bash

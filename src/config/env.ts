@@ -20,6 +20,13 @@ const envSchema = z.object({
   RESET_TOKEN_EXPIRES_MINUTES: z.coerce.number().default(60),
   SICAR_API_BASE: z.string().optional(),
   CORE_WORKFLOW_BIN: z.string().optional(),
+  SUPABASE_URL: z.string().url('SUPABASE_URL deve ser uma URL válida.'),
+  SUPABASE_ANON_KEY: z.string().min(1, 'SUPABASE_ANON_KEY é obrigatório.'),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'SUPABASE_SERVICE_ROLE_KEY é obrigatório.'),
+  SUPABASE_PASSWORD_RESET_REDIRECT: z
+    .string()
+    .url('SUPABASE_PASSWORD_RESET_REDIRECT deve ser uma URL válida.'),
+  SUPABASE_JWT_SECRET: z.string().min(1, 'SUPABASE_JWT_SECRET é obrigatório.'),
 });
 
 const parsedEnv = envSchema.parse(process.env);

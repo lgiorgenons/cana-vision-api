@@ -3,7 +3,7 @@
 ## Autenticação (`/api/auth`)
 
 ### POST `/auth/register`
-- **Descrição**: cria um novo usuário interno/cliente.
+- **Descrição**: cria um usuário e dispara o fluxo de confirmação do Supabase Auth.
 - **Body**:
   ```json
   {
@@ -26,16 +26,22 @@
     },
     "tokens": {
       "accessToken": "jwt",
-      "refreshToken": "jwt"
-    }
+      "refreshToken": "jwt",
+      "expiresAt": 1731525279,
+      "tokenType": "bearer"
+    },
+    "provider": "supabase",
+    "requiresEmailConfirmation": false
   }
   ```
+- **Observações**:
+  - Se o projeto Supabase exigir confirmação de e-mail, `tokens` será omitido e `requiresEmailConfirmation=true`. O usuário só obterá sessão após confirmar o e-mail.
 - **Erros comuns**:
   - 400 validação inválida (Zod).
   - 409 e-mail já cadastrado.
 
 ### POST `/auth/login`
-- **Descrição**: autentica usuário existente.
+- **Descrição**: autentica via Supabase Auth (respeitando confirmação de e-mail configurada no painel).
 - **Body**:
   ```json
   {
@@ -43,13 +49,13 @@
     "password": "string (min 8)"
   }
   ```
-- **Resposta 200**: mesmo formato de `register`.
+- **Resposta 200**: mesmo formato de `register` (com tokens do Supabase).
 - **Erros**:
   - 400 validação.
   - 401 credenciais inválidas.
 
 ### POST `/auth/forgot-password`
-- **Descrição**: inicia fluxo de redefinição de senha.
+- **Descrição**: aciona `supabase.auth.resetPasswordForEmail`, que envia o e-mail com o link oficial de redefinição.
 - **Body**:
   ```json
   {
@@ -67,12 +73,11 @@
   - Sempre retorna 200 para não expor usuários existentes.
   - `resetToken` só é retornado fora de produção para facilitar testes (útil para testar o endpoint seguinte). O formato enviado é `<userId>.<token>`.
 
-### POST `/auth/reset-password`
-- **Descrição**: aplica uma nova senha usando o token recebido no passo anterior.
+- **Descrição**: aplica uma nova senha usando o token enviado pelo Supabase no link de e-mail.
 - **Body**:
   ```json
   {
-    "token": "string (formato <userId>.<token>)",
+    "token": "string (token JWT enviado pelo Supabase)",
     "password": "string (min 8)"
   }
   ```
@@ -96,10 +101,10 @@
   ```
 - **Resposta 200**: mesmo formato do `POST /auth/login`.
 - **Erros**:
-  - 401 refresh token inválido ou usuário inativo.
+  - 401 refresh token inválido, expirado ou usuário pendente.
 
 ### POST `/auth/logout`
-- **Descrição**: encerra a sessão atual. Aceita (opcionalmente) o refresh token para futura revogação/telemetria.
+- **Descrição**: encerra a sessão atual no Supabase. Aceita (opcionalmente) o refresh token para revogar as sessões ativas do usuário.
 - **Body (opcional)**:
   ```json
   {

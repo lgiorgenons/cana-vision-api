@@ -41,11 +41,15 @@ export interface AuthUserDTO {
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
+  expiresAt?: number;
+  tokenType?: string;
 }
 
 export interface AuthResponse {
   user: AuthUserDTO;
-  tokens: AuthTokens;
+  tokens?: AuthTokens;
+  provider?: 'supabase';
+  requiresEmailConfirmation?: boolean;
 }
 
 export interface ForgotPasswordResponse {

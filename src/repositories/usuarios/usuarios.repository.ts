@@ -8,6 +8,7 @@ import type {
 } from '@domain/entities/usuario.entity';
 
 export interface CreateUsuarioInput {
+  id?: string;
   nome: string;
   email: string;
   passwordHash: string;
@@ -38,6 +39,7 @@ class PrismaUsuariosRepository implements UsuariosRepository {
   async create(data: CreateUsuarioInput): Promise<UsuarioEntity> {
     const record = await prisma.usuario.create({
       data: {
+        id: data.id,
         nome: data.nome,
         email: data.email,
         passwordHash: data.passwordHash,
