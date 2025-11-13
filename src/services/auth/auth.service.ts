@@ -18,55 +18,58 @@ import type {
   ResetPasswordDTO,
   ResetPasswordResponse,
 } from '@dtos/auth/auth.dto';
-import { supabaseAdminClient, supabaseClient } from '@integrations/supabase.client';
+import {
+  supabaseAdminClient,
+  supabaseClient,
+} from '@integrations/supabase.client';
 import type { UsuariosRepository } from '@repositories/usuarios/usuarios.repository';
 import type { Session, User } from '@supabase/supabase-js';
 
 const DEFAULT_ROLE = 'cliente' as const;
+const SUPABASE_PROVIDER = 'supabase';
 
 export class AuthService {
   constructor(private readonly usuariosRepository: UsuariosRepository) {}
 
   async register(payload: RegisterDTO): Promise<AuthResponse> {
     const normalizedEmail = this.normalizeEmail(payload.email);
-    const existing = await this.usuariosRepository.findByEmail(normalizedEmail);
+    const existing = await this.usuariosRepository.findByEmail(
+      normalizedEmail,
+    );
     if (existing) {
       throw new ConflictError('E-mail já está em uso.');
     }
 
-    const { data, error } = await supabaseAdminClient.auth.admin.createUser({
+    const { data, error } = await supabaseClient.auth.signUp({
       email: normalizedEmail,
       password: payload.password,
-      email_confirm: true,
-      user_metadata: {
-        nome: payload.nome,
-        role: payload.role ?? DEFAULT_ROLE,
-        clienteId: payload.clienteId ?? null,
+      options: {
+        data: {
+          nome: payload.nome,
+          role: payload.role ?? DEFAULT_ROLE,
+          clienteId: payload.clienteId ?? null,
+        },
+        emailRedirectTo: env.SUPABASE_PASSWORD_RESET_REDIRECT,
       },
     });
 
-    if (error || !data?.user) {
+    if (error || !data.user) {
       throw new ConflictError(
         error?.message ?? 'Não foi possível criar o usuário no Supabase.',
       );
     }
 
-    const usuario = await this.usuariosRepository.create({
-      id: data.user.id,
+    const usuario = await this.ensureUsuarioFromSupabase(data.user, {
       nome: payload.nome,
-      email: normalizedEmail,
       role: payload.role ?? DEFAULT_ROLE,
-      status: 'ativo',
       clienteId: payload.clienteId ?? null,
-      metadata: data.user.user_metadata ?? {},
-      passwordHash: 'supabase-managed',
     });
-
-    const session = await this.signInWithPassword(normalizedEmail, payload.password);
 
     return {
       user: this.presentUser(usuario),
-      tokens: this.mapSessionTokens(session),
+      tokens: this.mapSessionTokens(data.session ?? undefined),
+      provider: SUPABASE_PROVIDER,
+      requiresEmailConfirmation: !data.session,
     };
   }
 
@@ -82,6 +85,7 @@ export class AuthService {
     return {
       user: this.presentUser(usuario),
       tokens: this.mapSessionTokens(session),
+      provider: SUPABASE_PROVIDER,
     };
   }
 
@@ -136,6 +140,7 @@ export class AuthService {
     return {
       user: this.presentUser(usuario),
       tokens: this.mapSessionTokens(session),
+      provider: SUPABASE_PROVIDER,
     };
   }
 
@@ -153,13 +158,29 @@ export class AuthService {
     };
   }
 
-  private async ensureUsuarioFromSupabase(user: User): Promise<Usuario> {
+  private async ensureUsuarioFromSupabase(
+    user: User,
+    fallback?: {
+      nome?: string;
+      role?: UsuarioRole;
+      clienteId?: string | null;
+    },
+  ): Promise<Usuario> {
     if (!user.email) {
       throw new UnauthorizedError('Usuário sem e-mail associado no Supabase.');
     }
 
     const existingById = await this.usuariosRepository.findById(user.id);
+    const supabaseStatus: Usuario['status'] = user.email_confirmed_at
+      ? 'ativo'
+      : 'pendente';
+
     if (existingById) {
+      if (existingById.status !== supabaseStatus) {
+        return this.usuariosRepository.update(existingById.id, {
+          status: supabaseStatus,
+        });
+      }
       return existingById;
     }
 
@@ -171,11 +192,18 @@ export class AuthService {
       id: user.id,
       nome:
         (user.user_metadata?.nome as string | undefined) ??
+        fallback?.nome ??
         normalizedEmail.split('@')[0],
       email: normalizedEmail,
-      role: (user.user_metadata?.role as UsuarioRole | undefined) ?? DEFAULT_ROLE,
-      status: 'ativo' as const,
-      clienteId: (user.user_metadata?.clienteId as string | null | undefined) ?? null,
+      role:
+        (user.user_metadata?.role as UsuarioRole | undefined) ??
+        fallback?.role ??
+        DEFAULT_ROLE,
+      status: supabaseStatus,
+      clienteId:
+        (user.user_metadata?.clienteId as string | null | undefined) ??
+        fallback?.clienteId ??
+        null,
       metadata: user.user_metadata ?? {},
       passwordHash: 'supabase-managed',
     };
@@ -218,7 +246,11 @@ export class AuthService {
     return data.session;
   }
 
-  private mapSessionTokens(session: Session) {
+  private mapSessionTokens(session?: Session | null) {
+    if (!session) {
+      return undefined;
+    }
+
     if (!session.refresh_token) {
       throw new UnauthorizedError(
         'Sessão inválida retornada pelo Supabase (sem refresh token).',

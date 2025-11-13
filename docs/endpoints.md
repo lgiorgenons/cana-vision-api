@@ -3,7 +3,7 @@
 ## Autenticação (`/api/auth`)
 
 ### POST `/auth/register`
-- **Descrição**: cria um novo usuário interno/cliente.
+- **Descrição**: cria um novo usuário no Supabase Auth e dispara o fluxo nativo de confirmação (se habilitado no painel).
 - **Body**:
   ```json
   {
@@ -14,7 +14,7 @@
     "clienteId": "uuid ou null (opcional)"
   }
   ```
-- **Resposta 201**:
+- **Resposta 201** _(quando o Supabase retorna sessão inline)_:
   ```json
   {
     "user": {
@@ -26,10 +26,15 @@
     },
     "tokens": {
       "accessToken": "jwt",
-      "refreshToken": "jwt"
-    }
+      "refreshToken": "jwt",
+      "tokenType": "bearer"
+    },
+    "provider": "supabase",
+    "requiresEmailConfirmation": false
   }
   ```
+- **Observações**:
+  - Quando a confirmação de e-mail está habilitada no Supabase, `tokens` será omitido e `requiresEmailConfirmation` virá `true`. O usuário precisa clicar no link enviado pelo Supabase para finalizar o cadastro.
 - **Erros comuns**:
   - 400 validação inválida (Zod).
   - 409 e-mail já cadastrado.
@@ -49,7 +54,7 @@
   - 401 credenciais inválidas.
 
 ### POST `/auth/forgot-password`
-- **Descrição**: inicia fluxo de redefinição de senha.
+- **Descrição**: delega ao Supabase o envio do e-mail de redefinição.
 - **Body**:
   ```json
   {
@@ -59,20 +64,19 @@
 - **Resposta 200**:
   ```json
   {
-    "message": "Se o e-mail estiver cadastrado, enviaremos instruções para redefinir a senha.",
-    "resetToken": "string (somente ambientes não-produtivos)"
+    "message": "Se o e-mail estiver cadastrado, enviaremos instruções para redefinir a senha."
   }
   ```
 - **Observações**:
   - Sempre retorna 200 para não expor usuários existentes.
-  - `resetToken` só é retornado fora de produção para facilitar testes (útil para testar o endpoint seguinte). O formato enviado é `<userId>.<token>`.
+  - O e-mail contém o link oficial gerado pelo Supabase (configurado em `SUPABASE_PASSWORD_RESET_REDIRECT`).
 
 ### POST `/auth/reset-password`
-- **Descrição**: aplica uma nova senha usando o token recebido no passo anterior.
+- **Descrição**: aplica uma nova senha usando o token enviado pelo Supabase no link de e-mail.
 - **Body**:
   ```json
   {
-    "token": "string (formato <userId>.<token>)",
+    "accessToken": "string (token JWT encaminhado no link do Supabase)",
     "password": "string (min 8)"
   }
   ```

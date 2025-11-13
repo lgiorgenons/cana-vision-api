@@ -48,7 +48,9 @@ export interface AuthTokens {
 
 export interface AuthResponse {
   user: AuthUserDTO;
-  tokens: AuthTokens;
+  tokens?: AuthTokens;
+  provider?: 'supabase';
+  requiresEmailConfirmation?: boolean;
 }
 
 export interface ForgotPasswordResponse {
