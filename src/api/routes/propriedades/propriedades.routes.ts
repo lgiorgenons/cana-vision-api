@@ -1,1 +1,49 @@
-// TODO: definir rotas do domínio propriedades.
+import { Router } from 'express';
+import { PropriedadeController } from '../../controllers/propriedades/propriedades.controller';
+import { PropriedadeValidator } from '../../validators/propriedades/propriedades.validator';
+import { TalhaoController } from '../../controllers/talhoes/talhoes.controller';
+import { authMiddleware } from '../../../middlewares/auth.middleware';
+
+const router = Router();
+const propriedadeController = new PropriedadeController();
+const talhaoController = new TalhaoController();
+
+router.post(
+  '/',
+  authMiddleware,
+  PropriedadeValidator.createPropriedade,
+  (req, res, next) => propriedadeController.create(req, res).catch(next)
+);
+
+router.get(
+  '/',
+  authMiddleware,
+  (req, res, next) => propriedadeController.findAll(req, res).catch(next)
+);
+
+router.get(
+  '/:id',
+  authMiddleware,
+  (req, res, next) => propriedadeController.findById(req, res).catch(next)
+);
+
+router.put(
+  '/:id',
+  authMiddleware,
+  PropriedadeValidator.updatePropriedade,
+  (req, res, next) => propriedadeController.update(req, res).catch(next)
+);
+
+router.delete(
+  '/:id',
+  authMiddleware,
+  (req, res, next) => propriedadeController.delete(req, res).catch(next)
+);
+
+router.get(
+  '/:propriedadeId/talhoes',
+  authMiddleware,
+  (req, res, next) => talhaoController.findAllByPropriedadeId(req, res).catch(next)
+);
+
+export default router;
