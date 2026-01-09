@@ -15,8 +15,8 @@ ENV NODE_ENV=production
 RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 COPY --from=base /usr/src/app/node_modules ./node_modules
 COPY --from=base /usr/src/app/dist ./dist
-COPY --from=base /usr/src/app/tsconfig-paths-bootstrap.js ./tsconfig-paths-bootstrap.js
-COPY --from=base /usr/src/app/tsconfig.json ./tsconfig.json
-COPY --from=base /usr/src/app/tsconfig.build.json ./tsconfig.build.json
+COPY --from=base /usr/src/app/config/tsconfig-paths-bootstrap.js ./config/tsconfig-paths-bootstrap.js
+COPY --from=base /usr/src/app/config/tsconfig.json ./config/tsconfig.json
+COPY --from=base /usr/src/app/config/tsconfig.build.json ./config/tsconfig.build.json
 COPY package.json ./
-CMD ["node", "-r", "./tsconfig-paths-bootstrap", "dist/server.js"]
+CMD ["node", "-r", "./config/tsconfig-paths-bootstrap", "dist/server.js"]
