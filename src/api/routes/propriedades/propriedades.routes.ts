@@ -24,12 +24,14 @@ router.get(
 router.get(
   '/:id',
   authMiddleware,
+  PropriedadeValidator.validateId,
   (req, res, next) => propriedadeController.findById(req, res).catch(next)
 );
 
 router.put(
   '/:id',
   authMiddleware,
+  PropriedadeValidator.validateId,
   PropriedadeValidator.updatePropriedade,
   (req, res, next) => propriedadeController.update(req, res).catch(next)
 );
@@ -37,13 +39,19 @@ router.put(
 router.delete(
   '/:id',
   authMiddleware,
+  PropriedadeValidator.validateId,
   (req, res, next) => propriedadeController.delete(req, res).catch(next)
 );
 
 router.get(
   '/:propriedadeId/talhoes',
   authMiddleware,
-  (req, res, next) => talhaoController.findAllByPropriedadeId(req, res).catch(next)
+  PropriedadeValidator.validatePropriedadeId,
+  (req, _res, next) => {
+    req.query.propriedadeId = req.params.propriedadeId;
+    next();
+  },
+  (req, res, next) => talhaoController.findAll(req, res).catch(next)
 );
 
 export default router;

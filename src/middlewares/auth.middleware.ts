@@ -10,13 +10,13 @@ export async function authMiddleware(
   next: NextFunction,
 ) {
   try {
-    const authHeader = req.headers.authorization;
+    const { accessToken } = req.cookies;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!accessToken) {
       throw new UnauthorizedError('Token de autenticação não fornecido.');
     }
 
-    const token = authHeader.substring(7);
+    const token = accessToken;
     const {
       data: { user: supabaseUser },
       error,

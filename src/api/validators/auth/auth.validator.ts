@@ -30,11 +30,3 @@ export const resetPasswordSchema = z.object({
   accessToken: z.string().min(10),
   password: z.string().min(8),
 });
-
-export const refreshTokenSchema = z.object({
-  refreshToken: z.string().min(1),
-});
-
-export const logoutSchema = z.object({
-  refreshToken: z.string().min(1).optional(),
-});
