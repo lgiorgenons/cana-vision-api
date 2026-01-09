@@ -31,7 +31,6 @@ export class TalhaoRepository {
         areaHectares: true,
         safra: true,
         variedade: true,
-        metadata: true,
         createdAt: true,
         updatedAt: true,
       },

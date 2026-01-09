@@ -41,7 +41,6 @@ export class PropriedadeRepository {
             safra: true,
             variedade: true,
             propriedadeId: true,
-            metadata: true,
             createdAt: true,
             updatedAt: true,
           }
