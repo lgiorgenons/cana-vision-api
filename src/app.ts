@@ -1,4 +1,5 @@
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import express, { type Request, type Response } from 'express';
 import helmet from 'helmet';
 
@@ -16,7 +17,13 @@ const captureRawJson = (req: Request, _res: Response, buffer: Buffer) => {
 };
 
 app.use(helmet());
-app.use(cors());
+app.use(
+  cors({
+    origin: env.CORS_ORIGIN?.split(','),
+    credentials: true,
+  }),
+);
+app.use(cookieParser());
 app.use((req, res, next) => {
   if (!METHODS_REQUIRING_JSON.has(req.method)) {
     return next();
