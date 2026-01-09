@@ -15,33 +15,67 @@ Todos os endpoints descritos abaixo são protegidos e requerem um token de auten
 *   **Descrição:** Cria uma nova propriedade.
 *   **Input (Body):** `CreatePropriedadeDto` (JSON)
     ```json
+    
     {
-      "nome": "Fazenda Boa Esperança",
-      "codigoInterno": "FBE-01",
-      "clienteId": "uuid-do-cliente",
-      "codigoSicar": "CAR-12345-BR",
-      "geojson": {
-        "type": "Feature",
-        "geometry": {
-          "type": "Polygon",
-          "coordinates": [
-            [
-              [ -48.0, -16.0 ],
-              [ -47.0, -16.0 ],
-              [ -47.0, -15.0 ],
-              [ -48.0, -15.0 ],
-              [ -48.0, -16.0 ]
+      client_uuid:"uuid"
+      info_client:[iNFORMAçõe]
+      property: [
+        {"nome": "Fazenda Boa Esperança",
+        "codigoInterno": "FBE-01",
+        "clienteId": "uuid-do-cliente",
+        "codigoSicar": "CAR-12345-BR",
+        "geojson": {
+          "type": "Feature",
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [ -48.0, -16.0 ],
+                [ -47.0, -16.0 ],
+                [ -47.0, -15.0 ],
+                [ -48.0, -15.0 ],
+                [ -48.0, -16.0 ]
+              ]
             ]
-          ]
+          },
+          "properties": {
+            "area": 123.45
+          }
         },
-        "properties": {
-          "area": 123.45
-        }
-      },
-      "areaHectares": 350.75,
-      "culturaPrincipal": "Cana-de-açúcar",
-      "safraAtual": "2024/2025",
-      "metadata": {}
+        "areaHectares": 350.75,
+        "culturaPrincipal": "Cana-de-açúcar",
+        "safraAtual": "2024/2025",
+        "metadata": {}
+      },      
+      info:
+        {"nome": "Fazenda Boa Esperança",
+        "codigoInterno": "FBE-01",
+        "clienteId": "uuid-do-cliente",
+        "codigoSicar": "CAR-12345-BR",
+        "geojson": {
+          "type": "Feature",
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [ -48.0, -16.0 ],
+                [ -47.0, -16.0 ],
+                [ -47.0, -15.0 ],
+                [ -48.0, -15.0 ],
+                [ -48.0, -16.0 ]
+              ]
+            ]
+          },
+          "properties": {
+            "area": 123.45
+          }
+        },
+        "areaHectares": 350.75,
+        "culturaPrincipal": "Cana-de-açúcar",
+        "safraAtual": "2024/2025",
+        "metadata": {}
+      }
+      ]
     }
     ```
 *   **Retorno (Sucesso 201):** Objeto `Propriedade` (JSON), incluindo o campo `geojson`.
@@ -50,13 +84,13 @@ Todos os endpoints descritos abaixo são protegidos e requerem um token de auten
 *   **Endpoint:** `GET /api/propriedades`
 *   **Descrição:** Retorna todas as propriedades de um cliente específico.
 *   **Input (Query Parameter):** `clienteId` (string, UUID) - Ex: `/api/propriedades?clienteId=uuid-do-cliente`
-*   **Retorno (Sucesso 200):** Array de objetos `Propriedade` (JSON), cada um incluindo o campo `geojson`.
+*   **Retorno (Sucesso 200):** Array de objetos `Propriedade` (JSON), **sem** o campo `geojson` para maior performance.
 
 ### 3. Obter Detalhes da Propriedade
 *   **Endpoint:** `GET /api/propriedades/:id`
 *   **Descrição:** Retorna os detalhes de uma única propriedade pelo seu ID.
 *   **Input (Parâmetro de Rota):** `id` (string, UUID) - Ex: `/api/propriedades/uuid-da-propriedade`
-*   **Retorno (Sucesso 200):** Objeto `Propriedade` (JSON), incluindo o campo `geojson`.
+*   **Retorno (Sucesso 200):** Objeto `Propriedade` (JSON), incluindo o campo `geojson` e um array `talhoes` com os talhões associados (sem o `geojson` de cada talhão).
 
 ### 4. Atualizar Propriedade
 *   **Endpoint:** `PUT /api/propriedades/:id`
@@ -96,7 +130,7 @@ Todos os endpoints descritos abaixo são protegidos e requerem um token de auten
 *   **Endpoint:** `GET /api/propriedades/:propriedadeId/talhoes`
 *   **Descrição:** Retorna todos os talhões associados a uma propriedade específica.
 *   **Input (Parâmetro de Rota):** `propriedadeId` (string, UUID) - Ex: `/api/propriedades/uuid-da-propriedade/talhoes`
-*   **Retorno (Sucesso 200):** Array de objetos `Talhao` (JSON), cada um incluindo o campo `geojson`.
+*   **Retorno (Sucesso 200):** Array de objetos `Talhao` (JSON), **sem** o campo `geojson`.
 
 ---
 
@@ -144,13 +178,13 @@ Todos os endpoints descritos abaixo são protegidos e requerem um token de auten
 *   **Endpoint:** `GET /api/talhoes`
 *   **Descrição:** Retorna todos os talhões. Pode ser filtrado por `propriedadeId` via query parameter.
 *   **Input (Query Parameter Opcional):** `propriedadeId` (string, UUID)
-*   **Retorno (Sucesso 200):** Array de objetos `Talhao` (JSON), cada um incluindo o campo `geojson`.
+*   **Retorno (Sucesso 200):** Array de objetos `Talhao` (JSON), **sem** o campo `geojson`.
 
 ### 3. Obter Detalhes do Talhão (Info Talhão)
 *   **Endpoint:** `GET /api/talhoes/:id`
 *   **Descrição:** **Este endpoint retorna todas as informações de um único talhão.**
 *   **Input (Parâmetro de Rota):** `id` (string, UUID) - Ex: `/api/talhoes/uuid-do-talhao`
-*   **Retorno (Sucesso 200):** Objeto `Talhao` com todos os seus dados (JSON), incluindo o campo `geojson`.
+*   **Retorno (Sucesso 200):** Objeto `Talhao` com todos os seus dados (JSON), **incluindo** o campo `geojson`.
 
 ### 4. Atualizar Talhão
 *   **Endpoint:** `PUT /api/talhoes/:id`
@@ -240,13 +274,13 @@ All endpoints described below are protected and require a valid authentication t
 *   **Endpoint:** `GET /api/propriedades`
 *   **Description:** Returns all properties for a specific client.
 *   **Input (Query Parameter):** `clienteId` (string, UUID) - e.g., `/api/propriedades?clienteId=client-uuid`
-*   **Output (Success 200):** Array of `Propriedade` objects (JSON), each including the `geojson` field.
+*   **Output (Success 200):** Array of `Propriedade` objects (JSON), **without** the `geojson` field for performance.
 
 ### 3. Get Property Details
 *   **Endpoint:** `GET /api/propriedades/:id`
 *   **Description:** Returns the details of a single property by its ID.
 *   **Input (Route Parameter):** `id` (string, UUID) - e.g., `/api/propriedades/property-uuid`
-*   **Output (Success 200):** `Propriedade` object (JSON), including the `geojson` field.
+*   **Output (Success 200):** `Propriedade` object (JSON), including the `geojson` field and a `talhoes` array with the associated plots (without their `geojson`).
 
 ### 4. Update Property
 *   **Endpoint:** `PUT /api/propriedades/:id`
@@ -286,7 +320,7 @@ All endpoints described below are protected and require a valid authentication t
 *   **Endpoint:** `GET /api/propriedades/:propriedadeId/talhoes`
 *   **Description:** Returns all plots associated with a specific property.
 *   **Input (Route Parameter):** `propriedadeId` (string, UUID) - e.g., `/api/propriedades/property-uuid/talhoes`
-*   **Output (Success 200):** Array of `Talhao` objects (JSON), each including the `geojson` field.
+*   **Output (Success 200):** Array of `Talhao` objects (JSON), **without** the `geojson` field.
 
 ---
 
@@ -334,13 +368,13 @@ All endpoints described below are protected and require a valid authentication t
 *   **Endpoint:** `GET /api/talhoes`
 *   **Description:** Returns all plots. Can be filtered by `propriedadeId` via query parameter.
 *   **Input (Optional Query Parameter):** `propriedadeId` (string, UUID)
-*   **Output (Success 200):** Array of `Talhao` objects (JSON), each including the `geojson` field.
+*   **Output (Success 200):** Array of `Talhao` objects (JSON), **without** the `geojson` field.
 
 ### 3. Get Plot Details (Plot Info)
 *   **Endpoint:** `GET /api/talhoes/:id`
 *   **Description:** **This endpoint returns all information for a single plot.**
 *   **Input (Route Parameter):** `id` (string, UUID) - e.g., `/api/talhoes/plot-uuid`
-*   **Output (Success 200):** `Talhao` object with all its data (JSON), including the `geojson` field.
+*   **Output (Success 200):** `Talhao` object with all its data (JSON), **including** the `geojson` field.
 
 ### 4. Update Plot
 *   **Endpoint:** `PUT /api/talhoes/:id`

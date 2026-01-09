@@ -43,7 +43,11 @@ router.delete(
 router.get(
   '/:propriedadeId/talhoes',
   authMiddleware,
-  (req, res, next) => talhaoController.findAllByPropriedadeId(req, res).catch(next)
+  (req, res, next) => {
+    req.query.propriedadeId = req.params.propriedadeId;
+    next();
+  },
+  (req, res, next) => talhaoController.findAll(req, res).catch(next)
 );
 
 export default router;

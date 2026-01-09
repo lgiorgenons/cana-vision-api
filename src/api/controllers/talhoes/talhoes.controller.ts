@@ -30,12 +30,6 @@ export class TalhaoController {
     return res.status(200).json(talhao);
   }
 
-  async findAllByPropriedadeId(req: Request, res: Response): Promise<Response> {
-    const { propriedadeId } = req.params;
-    const talhoes = await this.talhaoService.findAll(propriedadeId);
-    return res.status(200).json(talhoes);
-  }
-
   async delete(req: Request, res: Response): Promise<Response> {
     const { id } = req.params;
     await this.talhaoService.delete(id);

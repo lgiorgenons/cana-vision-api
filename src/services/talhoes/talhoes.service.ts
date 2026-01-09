@@ -18,7 +18,7 @@ export class TalhaoService {
     return this.talhaoRepository.create(data);
   }
 
-  async findAll(propriedadeId?: string): Promise<Talhao[]> {
+  async findAll(propriedadeId?: string): Promise<Omit<Talhao, 'geojson'>[]> {
     const where: any = {};
     if (propriedadeId) {
       where.propriedadeId = propriedadeId;

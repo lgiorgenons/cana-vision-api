@@ -15,6 +15,36 @@ export class TalhaoRepository {
     cursor?: Prisma.TalhaoWhereUniqueInput;
     where?: Prisma.TalhaoWhereInput;
     orderBy?: Prisma.TalhaoOrderByWithRelationInput;
+  }): Promise<Omit<Talhao, 'geojson'>[]> {
+    const { skip, take, cursor, where, orderBy } = params;
+    return prisma.talhao.findMany({
+      skip,
+      take,
+      cursor,
+      where,
+      orderBy,
+      select: {
+        id: true,
+        nome: true,
+        codigo: true,
+        propriedadeId: true,
+        areaHectares: true,
+        cultura: true,
+        safra: true,
+        variedade: true,
+        metadata: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async findAllWithGeojson(params: {
+    skip?: number;
+    take?: number;
+    cursor?: Prisma.TalhaoWhereUniqueInput;
+    where?: Prisma.TalhaoWhereInput;
+    orderBy?: Prisma.TalhaoOrderByWithRelationInput;
   }): Promise<Talhao[]> {
     const { skip, take, cursor, where, orderBy } = params;
     return prisma.talhao.findMany({
@@ -25,6 +55,7 @@ export class TalhaoRepository {
       orderBy,
     });
   }
+
 
   async findById(id: string): Promise<Talhao | null> {
     return prisma.talhao.findUnique({

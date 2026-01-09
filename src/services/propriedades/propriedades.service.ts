@@ -11,14 +11,12 @@ export class PropriedadeService {
     return this.propriedadeRepository.create(data);
   }
 
-  async findAll(clienteId: string): Promise<Propriedade[]> {
-    return this.propriedadeRepository.findAll({
-      where: { clienteId },
-    });
+  async findAll(clienteId: string): Promise<Omit<Propriedade, 'geojson'>[]> {
+    return this.propriedadeRepository.findAllByClienteId(clienteId);
   }
 
   async findById(id: string): Promise<Propriedade> {
-    const propriedade = await this.propriedadeRepository.findById(id);
+    const propriedade = await this.propriedadeRepository.findByIdWithTalhoes(id);
     if (!propriedade) {
       throw new ApplicationError('Propriedade não encontrada', 404);
     }
