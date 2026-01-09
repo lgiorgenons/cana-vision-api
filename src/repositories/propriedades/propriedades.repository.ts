@@ -1,4 +1,4 @@
-import { Prisma, Propriedade } from '@prisma/client';
+import { Propriedade } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { CreatePropriedadeDto, UpdatePropriedadeDto } from '../../dtos/propriedades/propriedades.dto';
 

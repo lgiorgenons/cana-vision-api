@@ -1,32 +1,9 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "commonjs",
-    "lib": ["ES2022"],
-    "strict": true,
-    "esModuleInterop": true,
-    "moduleResolution": "node",
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "outDir": "dist",
-    "rootDir": "src",
-    "baseUrl": "src",
-    "resolveJsonModule": true,
-    "types": ["node", "jest"],
-    "paths": {
-      "@api/*": ["api/*"],
-      "@config/*": ["config/*"],
-      "@services/*": ["services/*"],
-      "@repositories/*": ["repositories/*"],
-      "@integrations/*": ["integrations/*"],
-      "@workers/*": ["workers/*"],
-      "@dtos/*": ["dtos/*"],
-      "@domain/*": ["domain/*"],
-      "@common/*": ["common/*"],
-      "@middlewares/*": ["middlewares/*"],
-      "@utils/*": ["utils/*"]
-    }
+    "outDir": "../dist",
+    "rootDir": ".."
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["../src"],
+  "exclude": ["../node_modules", "../dist", "../tests", "../**/*.spec.ts"]
 }

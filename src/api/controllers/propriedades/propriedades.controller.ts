@@ -8,11 +8,10 @@ export class PropriedadeController {
 
   async create(req: Request, res: Response): Promise<Response> {
     const createDto: CreatePropriedadeDto = req.body;
-    // Ensure the user is creating a property for their own client
-    if (req.user?.clienteId !== createDto.clienteId) {
-      throw new UnauthorizedError('Você não tem permissão para criar propriedades para este cliente.');
+    if (!req.user?.clienteId) {
+      throw new UnauthorizedError('Usuário não autenticado ou não associado a um cliente.');
     }
-    const propriedade = await this.propriedadeService.create(createDto);
+    const propriedade = await this.propriedadeService.create(createDto, req.user.clienteId);
     return res.status(201).json(propriedade);
   }
 

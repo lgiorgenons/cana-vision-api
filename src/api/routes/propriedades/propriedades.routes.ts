@@ -47,7 +47,7 @@ router.get(
   '/:propriedadeId/talhoes',
   authMiddleware,
   PropriedadeValidator.validatePropriedadeId,
-  (req, res, next) => {
+  (req, _res, next) => {
     req.query.propriedadeId = req.params.propriedadeId;
     next();
   },

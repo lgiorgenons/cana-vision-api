@@ -2,15 +2,15 @@ import { Prisma, Propriedade } from '@prisma/client';
 import { CreatePropriedadeDto, UpdatePropriedadeDto } from '../../dtos/propriedades/propriedades.dto';
 import { PropriedadeRepository } from '../../repositories/propriedades/propriedades.repository';
 import { ApplicationError } from '../../common/errors/application-error';
-import { ClienteNotFoundError, PropriedadeAlreadyExistsError } from '@common/errors/propriedades-error';
 
 export class PropriedadeService {
   constructor(private readonly propriedadeRepository: PropriedadeRepository = new PropriedadeRepository()) {}
 
-  async create(data: CreatePropriedadeDto): Promise<Propriedade> {
+  async create(data: CreatePropriedadeDto, clienteId: string): Promise<Propriedade> {
     try {
+      const dataWithClienteId = { ...data, clienteId };
       // TODO: check for duplicates can be more specific, e.g. find by codigoInterno and clienteId
-      return await this.propriedadeRepository.create(data);
+      return await this.propriedadeRepository.create(dataWithClienteId);
           } catch (error: unknown) {
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
               if (error.code === 'P2002') {
@@ -23,7 +23,6 @@ export class PropriedadeService {
     
     }
   }
-}
 
   async findAll(clienteId: string): Promise<Omit<Propriedade, 'geojson'>[]> {
     return this.propriedadeRepository.findAllByClienteId(clienteId);
