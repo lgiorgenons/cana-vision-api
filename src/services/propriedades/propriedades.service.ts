@@ -1,15 +1,23 @@
-import { Propriedade } from '@prisma/client';
+import { Prisma, Propriedade } from '@prisma/client';
 import { CreatePropriedadeDto, UpdatePropriedadeDto } from '../../dtos/propriedades/propriedades.dto';
 import { PropriedadeRepository } from '../../repositories/propriedades/propriedades.repository';
 import { ApplicationError } from '../../common/errors/application-error';
+import { ClienteNotFoundError, PropriedadeAlreadyExistsError } from '@common/errors/propriedades-error';
 
 export class PropriedadeService {
   constructor(private readonly propriedadeRepository: PropriedadeRepository = new PropriedadeRepository()) {}
 
   async create(data: CreatePropriedadeDto): Promise<Propriedade> {
-    // TODO: Add any business logic before creation, e.g., checking for duplicates
-    return this.propriedadeRepository.create(data);
+  try {
+    return await this.propriedadeRepository.create(data)
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === 'P2002') throw new PropriedadeAlreadyExistsError()
+      if (err.code === 'P2003') throw new ClienteNotFoundError()
+    }
+    throw err
   }
+}
 
   async findAll(clienteId: string): Promise<Propriedade[]> {
     return this.propriedadeRepository.findAll({
