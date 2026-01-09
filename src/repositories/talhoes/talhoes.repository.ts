@@ -29,7 +29,6 @@ export class TalhaoRepository {
         codigo: true,
         propriedadeId: true,
         areaHectares: true,
-        cultura: true,
         safra: true,
         variedade: true,
         metadata: true,

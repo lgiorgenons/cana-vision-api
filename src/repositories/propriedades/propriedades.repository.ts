@@ -38,7 +38,6 @@ export class PropriedadeRepository {
             nome: true,
             codigo: true,
             areaHectares: true,
-            cultura: true,
             safra: true,
             variedade: true,
             propriedadeId: true,
