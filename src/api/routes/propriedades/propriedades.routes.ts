@@ -24,12 +24,14 @@ router.get(
 router.get(
   '/:id',
   authMiddleware,
+  PropriedadeValidator.validateId,
   (req, res, next) => propriedadeController.findById(req, res).catch(next)
 );
 
 router.put(
   '/:id',
   authMiddleware,
+  PropriedadeValidator.validateId,
   PropriedadeValidator.updatePropriedade,
   (req, res, next) => propriedadeController.update(req, res).catch(next)
 );
@@ -37,12 +39,14 @@ router.put(
 router.delete(
   '/:id',
   authMiddleware,
+  PropriedadeValidator.validateId,
   (req, res, next) => propriedadeController.delete(req, res).catch(next)
 );
 
 router.get(
   '/:propriedadeId/talhoes',
   authMiddleware,
+  PropriedadeValidator.validatePropriedadeId,
   (req, res, next) => {
     req.query.propriedadeId = req.params.propriedadeId;
     next();

@@ -14,5 +14,13 @@ export const createPropriedadeSchema = z.object({
 
 export const updatePropriedadeSchema = createPropriedadeSchema.partial();
 
+export const paramsIdSchema = z.object({
+  id: z.string().uuid('ID inválido'),
+});
+
+export const paramsPropriedadeIdSchema = z.object({
+  propriedadeId: z.string().uuid('ID da propriedade inválido'),
+});
+
 export type CreatePropriedadeDto = z.infer<typeof createPropriedadeSchema>;
 export type UpdatePropriedadeDto = z.infer<typeof updatePropriedadeSchema>;

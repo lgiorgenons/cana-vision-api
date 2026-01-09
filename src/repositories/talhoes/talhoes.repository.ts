@@ -31,6 +31,7 @@ export class TalhaoRepository {
         areaHectares: true,
         safra: true,
         variedade: true,
+        status: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -54,6 +55,19 @@ export class TalhaoRepository {
     });
   }
 
+
+  async findByIdWithPropriedade(id: string) {
+    return prisma.talhao.findUnique({
+      where: { id },
+      include: {
+        propriedade: {
+          select: {
+            clienteId: true,
+          },
+        },
+      },
+    });
+  }
 
   async findById(id: string): Promise<Talhao | null> {
     return prisma.talhao.findUnique({
