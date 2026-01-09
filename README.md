@@ -27,7 +27,7 @@ O schema utiliza campos `geometry` e `uuid_generate_v4()`. Em qualquer ambiente 
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS postgis;
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";.
 ```
 
 As migrations do Prisma assumem que essas extensões existem. Para desenvolvimento:
