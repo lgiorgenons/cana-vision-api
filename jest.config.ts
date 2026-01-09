@@ -16,7 +16,8 @@ const config: Config = {
     '^@common/(.*)$': '<rootDir>/src/common/$1',
     '^@middlewares/(.*)$': '<rootDir>/src/middlewares/$1',
     '^@utils/(.*)$': '<rootDir>/src/utils/$1'
-  }
+  },
+  passWithNoTests: true
 };
 
 export default config;
