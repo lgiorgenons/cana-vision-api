@@ -2,6 +2,7 @@ import { Prisma, Propriedade } from '@prisma/client';
 import { CreatePropriedadeDto, UpdatePropriedadeDto } from '../../dtos/propriedades/propriedades.dto';
 import { PropriedadeRepository } from '../../repositories/propriedades/propriedades.repository';
 import { ApplicationError } from '../../common/errors/application-error';
+import { ClienteNotFoundError, PropriedadeAlreadyExistsError } from '@common/errors/propriedades-error';
 
 export class PropriedadeService {
   constructor(private readonly propriedadeRepository: PropriedadeRepository = new PropriedadeRepository()) {}
@@ -22,6 +23,7 @@ export class PropriedadeService {
     
     }
   }
+}
 
   async findAll(clienteId: string): Promise<Omit<Propriedade, 'geojson'>[]> {
     return this.propriedadeRepository.findAllByClienteId(clienteId);
