@@ -118,6 +118,7 @@ model Talhao {
   geom          Unsupported("geometry")?
   geojson       Json?
   areaHectares  Decimal?                 @map("area_hectares") @db.Decimal(12, 2)
+  cultura       String?                  @db.VarChar(100)
   variedade     String?                  @db.VarChar(80)
   safra         String?                  @db.VarChar(20)
   status        TalhaoStatus?            @default(ativo)

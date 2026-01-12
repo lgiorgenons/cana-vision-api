@@ -4,8 +4,19 @@ import { CreateTalhaoDto, UpdateTalhaoDto } from '../../dtos/talhoes/talhoes.dto
 
 export class TalhaoRepository {
   async create(data: CreateTalhaoDto): Promise<Talhao> {
+    const { propriedadeId, cultura, metadata, ...rest } = data;
+
     return prisma.talhao.create({
-      data,
+      data: {
+        ...rest,
+        metadata: {
+          ...(typeof metadata === 'object' ? metadata : {}),
+          ...(cultura ? { cultura } : {}),
+        },
+        propriedade: {
+          connect: { id: propriedadeId },
+        },
+      },
     });
   }
 
