@@ -9,10 +9,7 @@ export class TalhaoRepository {
     return prisma.talhao.create({
       data: {
         ...rest,
-        metadata: {
-          ...(typeof metadata === 'object' ? metadata : {}),
-          ...(cultura ? { cultura } : {}),
-        },
+        cultura,
         propriedade: {
           connect: { id: propriedadeId },
         },
@@ -41,6 +38,7 @@ export class TalhaoRepository {
         propriedadeId: true,
         areaHectares: true,
         safra: true,
+        cultura: true,
         variedade: true,
         status: true,
         createdAt: true,
