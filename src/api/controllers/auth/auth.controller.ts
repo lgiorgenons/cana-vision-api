@@ -5,9 +5,8 @@ import {
   loginSchema,
   registerSchema,
   resetPasswordSchema,
-  refreshTokenSchema,
-  logoutSchema,
 } from '@api/validators/auth/auth.validator';
+import { env } from '@config/env';
 import { authService } from '@services/index';
 
 class AuthController {
@@ -26,8 +25,29 @@ class AuthController {
   login = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const payload = loginSchema.parse(req.body);
-      const response = await this.service.login(payload);
-      return res.status(200).json(response);
+      const { user, tokens } = await this.service.login(payload);
+
+      if (!tokens) {
+        return res.status(401).json({ message: 'Authentication failed' });
+      }
+
+      res.cookie('accessToken', tokens.accessToken, {
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: tokens.expiresIn ? tokens.expiresIn * 1000 : undefined,
+        path: '/',
+      });
+
+      res.cookie('refreshToken', tokens.refreshToken, {
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        path: '/',
+      });
+
+      return res.status(200).json({ user });
     } catch (error) {
       return next(error);
     }
@@ -67,19 +87,61 @@ class AuthController {
     next: NextFunction,
   ) => {
     try {
-      const payload = refreshTokenSchema.parse(req.body);
-      const response = await this.service.refreshTokens(payload);
-      return res.status(200).json(response);
+      const { refreshToken } = req.cookies;
+
+      if (!refreshToken) {
+        return res
+          .status(401)
+          .json({ message: 'Refresh token não encontrado.' });
+      }
+
+      const { user, tokens } = await this.service.refreshTokens({
+        refreshToken,
+      });
+
+      if (!tokens) {
+        return res.status(401).json({ message: 'Falha na autenticação' });
+      }
+
+      res.cookie('accessToken', tokens.accessToken, {
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: tokens.expiresIn ? tokens.expiresIn * 1000 : undefined,
+        path: '/',
+      });
+
+      res.cookie('refreshToken', tokens.refreshToken, {
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        path: '/',
+      });
+
+      return res.status(200).json({ user });
     } catch (error) {
       return next(error);
     }
   };
 
-  logout = async (req: Request, res: Response, next: NextFunction) => {
+  logout = async (_req: Request, res: Response, next: NextFunction) => {
     try {
-      const payload = logoutSchema.parse(req.body ?? {});
-      const response = await this.service.logout(payload);
-      return res.status(200).json(response);
+      await this.service.logout({});
+
+      res.cookie('accessToken', '', {
+        httpOnly: true,
+        expires: new Date(0),
+        path: '/',
+      });
+
+      res.cookie('refreshToken', '', {
+        httpOnly: true,
+        expires: new Date(0),
+        path: '/',
+      });
+
+      return res.status(200).json({ message: 'Logout realizado com sucesso.' });
     } catch (error) {
       return next(error);
     }

@@ -25,6 +25,10 @@ import {
 import type { UsuariosRepository } from '@repositories/usuarios/usuarios.repository';
 import type { Session, User } from '@supabase/supabase-js';
 
+// TODO: [Fase de Testes] Atribuir todos os novos usuários a um cliente padrão.
+// Para desativar, mude para `null` ou remova a lógica que usa esta constante.
+const DEFAULT_TEST_CLIENT_ID = '1a5845b7-3622-4eaa-9ed3-cec2b25f4aa7';
+
 const DEFAULT_ROLE = 'cliente' as const;
 const SUPABASE_PROVIDER = 'supabase';
 
@@ -40,6 +44,8 @@ export class AuthService {
       throw new ConflictError('E-mail já está em uso.');
     }
 
+    const clienteIdToAssign = payload.clienteId ?? DEFAULT_TEST_CLIENT_ID;
+
     const { data, error } = await supabaseClient.auth.signUp({
       email: normalizedEmail,
       password: payload.password,
@@ -47,7 +53,7 @@ export class AuthService {
         data: {
           nome: payload.nome,
           role: payload.role ?? DEFAULT_ROLE,
-          clienteId: payload.clienteId ?? null,
+          clienteId: clienteIdToAssign,
         },
         emailRedirectTo: env.SUPABASE_PASSWORD_RESET_REDIRECT,
       },
@@ -62,7 +68,7 @@ export class AuthService {
     const usuario = await this.ensureUsuarioFromSupabase(data.user, {
       nome: payload.nome,
       role: payload.role ?? DEFAULT_ROLE,
-      clienteId: payload.clienteId ?? null,
+      clienteId: clienteIdToAssign,
     });
 
     return {
@@ -203,7 +209,7 @@ export class AuthService {
       clienteId:
         (user.user_metadata?.clienteId as string | null | undefined) ??
         fallback?.clienteId ??
-        null,
+        DEFAULT_TEST_CLIENT_ID,
       metadata: user.user_metadata ?? {},
       passwordHash: 'supabase-managed',
     };
@@ -214,6 +220,7 @@ export class AuthService {
 
     return this.usuariosRepository.create(basePayload);
   }
+
 
   private ensureUserIsActive(usuario: Usuario) {
     if (usuario.status !== 'ativo') {

@@ -1,4 +1,4 @@
-import { Prisma, Propriedade } from '@prisma/client';
+import { Propriedade } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { CreatePropriedadeDto, UpdatePropriedadeDto } from '../../dtos/propriedades/propriedades.dto';
 
@@ -9,20 +9,43 @@ export class PropriedadeRepository {
     });
   }
 
-  async findAll(params: {
-    skip?: number;
-    take?: number;
-    cursor?: Prisma.PropriedadeWhereUniqueInput;
-    where?: Prisma.PropriedadeWhereInput;
-    orderBy?: Prisma.PropriedadeOrderByWithRelationInput;
-  }): Promise<Propriedade[]> {
-    const { skip, take, cursor, where, orderBy } = params;
+  async findAllByClienteId(clienteId: string): Promise<Omit<Propriedade, 'geojson'>[]> {
     return prisma.propriedade.findMany({
-      skip,
-      take,
-      cursor,
-      where,
-      orderBy,
+      where: { clienteId },
+      select: {
+        id: true,
+        nome: true,
+        codigoInterno: true,
+        clienteId: true,
+        codigoSicar: true,
+        areaHectares: true,
+        culturaPrincipal: true,
+        safraAtual: true,
+        metadata: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async findByIdWithTalhoes(id: string): Promise<Propriedade | null> {
+    return prisma.propriedade.findUnique({
+      where: { id },
+      include: {
+        talhoes: {
+          select: {
+            id: true,
+            nome: true,
+            codigo: true,
+            areaHectares: true,
+            safra: true,
+            variedade: true,
+            propriedadeId: true,
+            createdAt: true,
+            updatedAt: true,
+          }
+        }
+      },
     });
   }
 
