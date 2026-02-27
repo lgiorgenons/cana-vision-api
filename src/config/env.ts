@@ -12,6 +12,7 @@ const envSchema = z.object({
   REDIS_URL: z.string().optional(),
   SICAR_API_BASE: z.string().optional(),
   CORE_WORKFLOW_BIN: z.string().optional(),
+  GCS_BUCKET: z.string().default('atmos-agro-data-lake-dev'),
   CORS_ORIGIN: z.string().optional(),
   SUPABASE_URL: z.string().url(),
   SUPABASE_ANON_KEY: z.string().min(1, 'SUPABASE_ANON_KEY � obrigat�rio.'),
