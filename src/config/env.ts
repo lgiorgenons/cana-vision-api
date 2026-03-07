@@ -24,8 +24,9 @@ const envSchema = z.object({
     .url('SUPABASE_PASSWORD_RESET_REDIRECT deve ser uma URL v�lida.'),
   SUPABASE_JWT_SECRET: z
     .string()
-    .min(1, 'SUPABASE_JWT_SECRET � obrigat�rio para validar tokens.'),
-});
+    .min(1, 'SUPABASE_JWT_SECRET  obrigatrio para validar tokens.'),
+  INTERNAL_API_KEY: z.string().default('canavision-secret-key'),
+  });
 
 export const env = envSchema.parse(process.env);
 export type Env = typeof env;

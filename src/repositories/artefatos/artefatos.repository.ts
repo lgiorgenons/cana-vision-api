@@ -28,6 +28,32 @@ export class ArtefatosRepository {
     });
   }
 
+  async findByClienteId(clienteId: string): Promise<Artefato[]> {
+    return prisma.artefato.findMany({
+      where: {
+        talhao: {
+          propriedade: {
+            clienteId,
+          },
+        },
+      },
+      include: {
+        talhao: {
+          select: {
+            nome: true,
+            codigo: true,
+            propriedade: {
+              select: {
+                nome: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { geradoEm: 'desc' },
+    });
+  }
+
   async findByJobId(jobId: string): Promise<Artefato[]> {
     return prisma.artefato.findMany({
       where: { jobId },

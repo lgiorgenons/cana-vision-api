@@ -12,7 +12,7 @@ export class ArtefatosService {
   ) {}
 
   /**
-   * Lista todos os artefatos de uma propriedade com URLs assinadas.
+   * Lista todos os artefatos de uma propriedade com URLs da nossa API (Proxy).
    */
   async listByPropriedade(propriedadeId: string, authClienteId: string) {
     // Valida se a propriedade pertence ao cliente
@@ -20,38 +20,70 @@ export class ArtefatosService {
 
     const artefatos = await this.artefatosRepository.findByPropriedadeId(propriedadeId);
 
-    return Promise.all(
-      artefatos.map(async (art) => ({
-        ...art,
-        url: await this.storage.getSignedUrl(art.caminho),
-      }))
-    );
+    return artefatos.map((art) => ({
+      ...art,
+      url: `/api/artefatos/${art.id}/download`,
+    }));
   }
 
   /**
-   * Gera uma URL assinada para um artefato específico com validação de cliente.
+   * Lista todos os artefatos vinculados ao cliente com URLs da nossa API (Proxy).
    */
-  async getSignedUrl(artefatoId: string, authClienteId: string) {
+  async listByCliente(authClienteId: string) {
+    const artefatos = await this.artefatosRepository.findByClienteId(authClienteId);
+
+    return artefatos.map((art) => ({
+      ...art,
+      url: `/api/artefatos/${art.id}/download`,
+    }));
+  }
+
+  /**
+   * Retorna metadados de um artefato específico com URL da nossa API (Proxy).
+   */
+  async getById(artefatoId: string, authClienteId: string) {
     const artefato = await this.artefatosRepository.findById(artefatoId);
 
     if (!artefato) {
       throw new ApplicationError('Artefato não encontrado', 404);
     }
 
-    // Validação de Tenancy: Verifica se o artefato pertence ao cliente autenticado
+    const artefatosClienteId = artefato.talhao?.propriedade?.clienteId;
+    
+    if (artefatosClienteId !== authClienteId) {
+      throw new ApplicationError('Acesso negado a este artefato', 403);
+    }
+    
+    return {
+      ...artefato,
+      url: `/api/artefatos/${artefato.id}/download`,
+      talhao: undefined 
+    };
+  }
+
+  /**
+   * Retorna um stream de leitura do arquivo validando tenancy.
+   */
+  async downloadStream(artefatoId: string, authClienteId: string) {
+    const artefato = await this.artefatosRepository.findById(artefatoId);
+
+    if (!artefato) {
+      throw new ApplicationError('Artefato não encontrado', 404);
+    }
+
     const artefatosClienteId = artefato.talhao?.propriedade?.clienteId;
     
     if (artefatosClienteId !== authClienteId) {
       throw new ApplicationError('Acesso negado a este artefato', 403);
     }
 
-    const url = await this.storage.getSignedUrl(artefato.caminho);
-    
+    const stream = this.storage.getReadStream(artefato.caminho);
+    const fileName = artefato.caminho.split('/').pop() || 'download.tif';
+
     return {
-      ...artefato,
-      url,
-      // Remove campos de relacionamento internos antes de retornar
-      talhao: undefined 
+      stream,
+      fileName,
+      tipo: artefato.tipo
     };
   }
 }

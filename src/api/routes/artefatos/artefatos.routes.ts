@@ -6,6 +6,16 @@ const router = Router();
 const artefatosController = new ArtefatosController();
 
 /**
+ * @route GET /api/artefatos
+ * @desc Lista todos os artefatos vinculados ao cliente autenticado (todas as suas propriedades).
+ */
+router.get(
+  '/',
+  authMiddleware,
+  (req, res, next) => artefatosController.listAll(req, res).catch(next)
+);
+
+/**
  * @route GET /api/artefatos/propriedade/:propriedadeId
  * @desc Lista todos os artefatos (GeoTIFFs, etc) de uma propriedade com URLs assinadas.
  */
