@@ -24,16 +24,12 @@ API Node.js de alto desempenho para orquestração de processamento de imagens d
 
 ### Instalação
 ```bash
-# 1. Instalar dependências
 npm install
 
-# 2. Configurar variáveis de ambiente
 cp .env.example .env
 
-# 3. Gerar o client do Prisma
 npm run prisma:generate
 
-# 4. Iniciar em modo desenvolvimento
 npm run dev
 ```
 
