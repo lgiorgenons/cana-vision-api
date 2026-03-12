@@ -14,21 +14,12 @@ export class ArtefatosService {
    * Formata a resposta do artefato com o identificador semântico
    */
   private formatResponse(art: any) {
-    const propId = art.propriedadeId || art.talhao?.propriedadeId;
-    const shortPropId = propId ? propId.split('-')[0] : 'unknown';
-    
-    // Formata data para YYYYMMDD
-    const dateStr = art.dataReferencia 
-      ? new Date(art.dataReferencia).toISOString().split('T')[0].replace(/-/g, '')
-      : '00000000';
-
-    const sufixo = art.talhao?.codigo ? `_${art.talhao.codigo}` : '';
-    const identificador = `${shortPropId}-${dateStr}-${art.indice}${sufixo}`;
+    const identificador = art.identificador || art.id; // Fallback para ID se não tiver identificador
 
     return {
       ...art,
       identificador,
-      url: `/api/artefatos/${art.id}/download`,
+      url: `/api/artefatos/${identificador}/download`,
     };
   }
 

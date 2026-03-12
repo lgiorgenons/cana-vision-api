@@ -1,22 +1,21 @@
 # Endpoint: /api/artefatos/:id (GET)
 
 ## Descrição:
-Retorna os metadados completos e a URL de download (proxy) de um único artefato específico. Este endpoint é ideal para buscar detalhes de uma única imagem ou para visualizar metadados de processamento (ex: sensor, nuvens).
+Retorna os metadados completos de um único artefato. Este endpoint é flexível e aceita tanto o **UUID técnico** quanto o **Identificador Semântico**.
 
 ## Método:
 `GET`
 
 ## Parâmetros de Requisição:
 ### Path Params:
-- `id` (string, UUID, Obrigatório): ID único do artefato no banco de dados.
-
-### Body:
-Nenhum.
+- `id` (string, UUID ou Identificador, Obrigatório): 
+    - Exemplo UUID: `e9e0d9ef-ed04-429c-ae75-c1a3182ac6d2`
+    - Exemplo Identificador: `8cc63dfa-20260308-RGB_TOTAL`
 
 ## Resposta de Sucesso (200 OK):
-### Exemplo de Sucesso:
+### Exemplo com Identificador Semântico:
 **Requisição:**
-`GET /api/artefatos/e9e0d9ef-ed04-429c-ae75-c1a3182ac6d2`
+`GET /api/artefatos/8cc63dfa-20260308-RGB_TOTAL`
 
 **Resposta:**
 `Status: 200 OK`
@@ -27,14 +26,10 @@ Nenhum.
   "tipo": "geotiff",
   "indice": "RGB_TOTAL",
   "dataReferencia": "2026-03-08T00:00:00.000Z",
-  "geradoEm": "2026-03-08T03:05:33.228Z",
-  "url": "/api/artefatos/e9e0d9ef-ed04-429c-ae75-c1a3182ac6d2/download",
-  "caminho": "sentinel2/fazenda_toda_rgb.tif",
-  "checksum": "sha256:...",
+  "url": "/api/artefatos/8cc63dfa-20260308-RGB_TOTAL/download",
   "metadata": {
     "sensor": "Sentinel-2",
-    "escala": "fazenda_completa",
-    "nuvens": 0.05
+    "escala": "fazenda_completa"
   }
 }
 ```
@@ -43,14 +38,8 @@ Nenhum.
 
 ## Respostas de Erro:
 
-### 400 Bad Request:
-ID do artefato em formato inválido (não é um UUID).
-
 ### 404 Not Found:
-Artefato não encontrado no banco de dados.
+Artefato não encontrado (ID ou Identificador inexistente).
 
 ### 403 Forbidden:
-O artefato pertence a outro cliente. Acesso negado.
-
-### 500 Internal Server Error:
-Erro interno ao processar a consulta.
+Acesso negado (o artefato pertence a outro cliente).

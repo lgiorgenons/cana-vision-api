@@ -58,9 +58,13 @@ export class ArtefatosRepository {
     });
   }
 
-  async findById(id: string) {
-    return prisma.artefato.findUnique({
-      where: { id },
+  async findById(idOrIdentificador: string) {
+    const isUuid = idOrIdentificador.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+
+    return prisma.artefato.findFirst({
+      where: isUuid 
+        ? { id: idOrIdentificador } 
+        : { identificador: idOrIdentificador },
       include: {
         talhao: {
           select: {

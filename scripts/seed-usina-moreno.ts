@@ -73,6 +73,7 @@ async function main() {
     {
       tipo: 'geotiff' as const,
       indice: 'NDVI_TOTAL',
+      identificador: '8cc63dfa-20260308-NDVI_TOTAL',
       caminho: 'sentinel2/usina_moreno_ndvi_20260308.tif',
       propriedadeId: propriedade.id,
       dataReferencia: dataRef,
@@ -81,6 +82,7 @@ async function main() {
     {
       tipo: 'geotiff' as const,
       indice: 'NDWI_TOTAL',
+      identificador: '8cc63dfa-20260308-NDWI_TOTAL',
       caminho: 'sentinel2/usina_moreno_ndwi_20260308.tif',
       propriedadeId: propriedade.id,
       dataReferencia: dataRef,
@@ -89,6 +91,7 @@ async function main() {
     {
       tipo: 'geotiff' as const,
       indice: 'NDVI',
+      identificador: '8cc63dfa-20260308-NDVI_T01',
       talhaoId: talhao.id,
       caminho: 'sentinel2/t01_ndvi_20260308.tif',
       dataReferencia: dataRef,
