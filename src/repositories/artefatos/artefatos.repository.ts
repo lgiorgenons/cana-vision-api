@@ -64,6 +64,8 @@ export class ArtefatosRepository {
       include: {
         talhao: {
           select: {
+            codigo: true,
+            propriedadeId: true,
             propriedade: { select: { clienteId: true } }
           }
         },

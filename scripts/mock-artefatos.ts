@@ -13,13 +13,15 @@ async function main() {
       indice: 'NDVI_TOTAL',
       caminho: 'sentinel2/fazenda_toda_ndvi.tif',
       propriedadeId: PROPRIEDADE_ID,
-      metadata: { sensor: 'Sentinel-2', escala: 'fazenda_completa', data: new Date().toISOString() }
+      dataReferencia: new Date('2026-03-08'),
+      metadata: { sensor: 'Sentinel-2', escala: 'fazenda_completa' }
     },
     {
       tipo: 'geotiff' as const,
       indice: 'RGB_TOTAL',
       caminho: 'sentinel2/fazenda_toda_rgb.tif',
       propriedadeId: PROPRIEDADE_ID,
+      dataReferencia: new Date('2026-03-08'),
       metadata: { sensor: 'Sentinel-2', escala: 'fazenda_completa' }
     }
   ];

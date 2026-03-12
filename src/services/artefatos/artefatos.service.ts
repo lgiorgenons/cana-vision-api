@@ -11,6 +11,28 @@ export class ArtefatosService {
   ) {}
 
   /**
+   * Formata a resposta do artefato com o identificador semântico
+   */
+  private formatResponse(art: any) {
+    const propId = art.propriedadeId || art.talhao?.propriedadeId;
+    const shortPropId = propId ? propId.split('-')[0] : 'unknown';
+    
+    // Formata data para YYYYMMDD
+    const dateStr = art.dataReferencia 
+      ? new Date(art.dataReferencia).toISOString().split('T')[0].replace(/-/g, '')
+      : '00000000';
+
+    const sufixo = art.talhao?.codigo ? `_${art.talhao.codigo}` : '';
+    const identificador = `${shortPropId}-${dateStr}-${art.indice}${sufixo}`;
+
+    return {
+      ...art,
+      identificador,
+      url: `/api/artefatos/${art.id}/download`,
+    };
+  }
+
+  /**
    * Lista todos os artefatos de uma propriedade (ou seus talhões)
    */
   async listByPropriedade(propriedadeId: string, authClienteId: string) {
@@ -19,10 +41,7 @@ export class ArtefatosService {
 
     const artefatos = await this.artefatosRepository.findByPropriedadeId(propriedadeId);
 
-    return artefatos.map((art) => ({
-      ...art,
-      url: `/api/artefatos/${art.id}/download`,
-    }));
+    return artefatos.map((art) => this.formatResponse(art));
   }
 
   /**
@@ -31,10 +50,7 @@ export class ArtefatosService {
   async listByCliente(authClienteId: string) {
     const artefatos = await this.artefatosRepository.findByClienteId(authClienteId);
 
-    return artefatos.map((art) => ({
-      ...art,
-      url: `/api/artefatos/${art.id}/download`,
-    }));
+    return artefatos.map((art) => this.formatResponse(art));
   }
 
   /**
@@ -54,10 +70,7 @@ export class ArtefatosService {
       throw new ForbiddenError('Acesso negado a este artefato');
     }
     
-    return {
-      ...artefato,
-      url: `/api/artefatos/${artefato.id}/download`,
-    };
+    return this.formatResponse(artefato);
   }
 
   /**

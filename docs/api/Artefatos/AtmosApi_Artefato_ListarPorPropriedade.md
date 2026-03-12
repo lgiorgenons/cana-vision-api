@@ -1,37 +1,71 @@
-# Endpoint: /artefatos/propriedade/:propriedadeId (GET)
+# 📄 Atmos API - Listar Artefatos por Propriedade
 
-## Descrição:
-Lista todos os artefatos (GeoTIFFs de NDVI, NDWI, etc.) vinculados aos talhões de uma propriedade específica, gerando URLs assinadas temporárias para acesso aos arquivos no Google Cloud Storage.
+## Endpoint: `/api/artefatos/propriedade/:propriedadeId` (GET)
 
-## Método:
+**Descrição:**  
+Lista todos os artefatos (GeoTIFFs de NDVI, NDWI, etc.) vinculados a uma propriedade específica. Isso inclui tanto os processamentos globais da fazenda (ex: NDVI_TOTAL) quanto os processamentos individuais de cada talhão pertencente a ela. 
+
+> **Nota:** O endpoint utiliza o **Identificador Semântico** (`propriedade-data-indice`) para facilitar o agrupamento no Frontend.
+
+**Método:**  
 `GET`
 
-## Parâmetros de Requisição:
-### Path Params:
+**Parâmetros de Requisição:**
+
+**Path Params:**
 - `propriedadeId` (string, UUID, Obrigatório): ID da propriedade para buscar os arquivos.
 
-### Body:
+**Body:**  
 Nenhum.
 
-## Resposta de Sucesso (200 OK):
-### Exemplo de Sucesso (O que fazer):
-**Requisição:**
-`GET /api/artefatos/propriedade/550e8400-e29b-41d4-a716-446655440000`
+**Resposta de Sucesso (200 OK):**
 
-**Resposta:**
+**Exemplo de Sucesso (O que fazer):**
+
+**Requisição:**  
+`GET /api/artefatos/propriedade/8cc63dfa-42c9-4b84-a950-72077b283435`
+
+**Resposta:**  
 `Status: 200 OK`
+
 ```json
 [
   {
-    "id": "990e8400-e29b-41d4-a716-446655449999",
+    "id": "e9e0d9ef-ed04-429c-ae75-c1a3182ac6d2",
+    "identificador": "8cc63dfa-20260308-RGB_TOTAL",
+    "propriedadeId": "8cc63dfa-42c9-4b84-a950-72077b283435",
     "tipo": "geotiff",
-    "indice": "NDVI",
-    "caminho": "processed/550e8400-e29b-41d4-a716-446655440000/2025-12-29_NDVI.tif",
-    "geradoEm": "2025-12-29T10:00:00Z",
-    "url": "https://storage.googleapis.com/atmos-agro-data-lake-dev/processed/...&X-Goog-Signature=...",
+    "indice": "RGB_TOTAL",
+    "caminho": "sentinel2/fazenda_toda_rgb.tif",
+    "dataReferencia": "2026-03-08T00:00:00.000Z",
+    "geradoEm": "2026-03-08T03:05:33.228Z",
+    "url": "/api/artefatos/e9e0d9ef-ed04-429c-ae75-c1a3182ac6d2/download",
+    "metadata": {
+        "escala": "fazenda_completa",
+        "sensor": "Sentinel-2"
+    },
+    "talhao": null,
+    "propriedade": {
+        "nome": "Usina Moreno"
+    }
+  },
+  {
+    "id": "a820340f-80f5-40a5-a99e-d68c50f235c8",
+    "identificador": "8cc63dfa-20260308-RGB_T01",
+    "propriedadeId": "8cc63dfa-42c9-4b84-a950-72077b283435",
+    "talhaoId": "81c8e3d3-0eab-4412-b248-8d1cc2f21ba6",
+    "tipo": "geotiff",
+    "indice": "RGB",
+    "caminho": "sentinel2/rgb_test_mock.tif",
+    "dataReferencia": "2026-03-08T00:00:00.000Z",
+    "geradoEm": "2026-03-08T01:32:24.203Z",
+    "url": "/api/artefatos/a820340f-80f5-40a5-a99e-d68c50f235c8/download",
     "talhao": {
-      "nome": "Talhão 01",
-      "codigo": "T01"
+        "nome": "Talhão 01",
+        "codigo": "T01"
+    },
+    "propriedade": {
+        "nome": "Usina Moreno"
     }
   }
 ]
@@ -39,43 +73,12 @@ Nenhum.
 
 ---
 
-## Respostas de Erro (O que NÃO fazer):
+**Respostas de Erro (O que NÃO fazer):**
 
-### 400 Bad Request:
-`propriedadeId` inválido.
-- **Exemplo de Erro:** `GET /api/artefatos/propriedade/fazenda-x`.
-- **Resposta:**
-```json
-{
-  "message": "Erro de validação",
-  "errors": [
-    {
-      "path": "propriedadeId",
-      "message": "ID da propriedade inválido"
-    }
-  ]
-}
-```
+**400 Bad Request:** `propriedadeId` inválido.
 
-### 404 Not Found:
-Propriedade não encontrada ou não pertence ao cliente do usuário.
-- **Exemplo de Erro:** Tentar listar artefatos de uma fazenda que não existe ou de outro cliente.
-- **Resposta:**
-```json
-{
-  "message": "Propriedade não encontrada"
-}
-```
+**404 Not Found:** Propriedade não encontrada ou não pertence ao cliente do usuário.
 
-### 401 Unauthorized:
-Usuário não autenticado ou sem cliente associado.
+**401 Unauthorized:** Usuário não autenticado ou sem cliente associado.
 
-### 500 Internal Server Error:
-Erro na comunicação com o Google Cloud Storage ou banco de dados.
-- **Exemplo de Erro:** Falha ao gerar a Signed URL no GCS.
-- **Resposta:**
-```json
-{
-  "message": "Erro ao gerar URL assinada para o artefato"
-}
-```
+**500 Internal Server Error:** Erro na comunicação com o Google Cloud Storage ou banco de dados.
