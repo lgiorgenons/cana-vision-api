@@ -21,7 +21,7 @@ export class ArtefatosController {
     if (!req.user || !req.user.clienteId) {
       throw new UnauthorizedError('Usuário não autenticado ou não associado a um cliente.');
     }
-    const artefatos = await this.artefatosService.listByPropriedade(propriedadeId, req.user.clienteId);
+    const artefatos = await this.artefatosService.listByPropriedade(propriedadeId.trim(), req.user.clienteId);
     return res.status(200).json(artefatos);
   }
 

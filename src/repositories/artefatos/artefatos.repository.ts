@@ -5,6 +5,11 @@ export class ArtefatosRepository {
   async findByTalhaoId(talhaoId: string): Promise<Artefato[]> {
     return prisma.artefato.findMany({
       where: { talhaoId },
+      include: {
+        talhao: {
+          select: { nome: true, codigo: true }
+        }
+      },
       orderBy: { geradoEm: 'desc' },
     });
   }
@@ -12,17 +17,18 @@ export class ArtefatosRepository {
   async findByPropriedadeId(propriedadeId: string): Promise<Artefato[]> {
     return prisma.artefato.findMany({
       where: {
-        talhao: {
-          propriedadeId,
-        },
+        OR: [
+          { propriedadeId },
+          { talhao: { propriedadeId } }
+        ]
       },
       include: {
         talhao: {
-          select: {
-            nome: true,
-            codigo: true,
-          },
+          select: { nome: true, codigo: true }
         },
+        propriedade: {
+          select: { nome: true }
+        }
       },
       orderBy: { geradoEm: 'desc' },
     });
@@ -31,32 +37,24 @@ export class ArtefatosRepository {
   async findByClienteId(clienteId: string): Promise<Artefato[]> {
     return prisma.artefato.findMany({
       where: {
-        talhao: {
-          propriedade: {
-            clienteId,
-          },
-        },
+        OR: [
+          { propriedade: { clienteId } },
+          { talhao: { propriedade: { clienteId } } }
+        ]
       },
       include: {
         talhao: {
           select: {
             nome: true,
             codigo: true,
-            propriedade: {
-              select: {
-                nome: true,
-              },
-            },
-          },
+            propriedade: { select: { nome: true } }
+          }
         },
+        propriedade: {
+          select: { nome: true }
+        }
       },
       orderBy: { geradoEm: 'desc' },
-    });
-  }
-
-  async findByJobId(jobId: string): Promise<Artefato[]> {
-    return prisma.artefato.findMany({
-      where: { jobId },
     });
   }
 
@@ -66,18 +64,17 @@ export class ArtefatosRepository {
       include: {
         talhao: {
           select: {
-            propriedade: {
-              select: {
-                clienteId: true,
-              },
-            },
-          },
+            propriedade: { select: { clienteId: true } }
+          }
         },
+        propriedade: {
+          select: { clienteId: true }
+        }
       },
     });
   }
 
-  async create(data: Omit<Artefato, 'id' | 'geradoEm'>): Promise<Artefato> {
+  async create(data: any): Promise<Artefato> {
     return prisma.artefato.create({
       data,
     });

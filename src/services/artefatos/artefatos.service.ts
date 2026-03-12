@@ -1,8 +1,7 @@
-import { Artefato } from '@prisma/client';
 import { ArtefatosRepository } from '../../repositories/artefatos/artefatos.repository';
 import { PropriedadeService } from '../propriedades/propriedades.service';
 import { StorageClient, storageClient } from '../../integrations/storage/storage.client';
-import { ApplicationError } from '../../common/errors/application-error';
+import { ApplicationError, ForbiddenError, NotFoundError } from '../../common/errors/application-error';
 
 export class ArtefatosService {
   constructor(
@@ -12,7 +11,7 @@ export class ArtefatosService {
   ) {}
 
   /**
-   * Lista todos os artefatos de uma propriedade com URLs da nossa API (Proxy).
+   * Lista todos os artefatos de uma propriedade (ou seus talhões)
    */
   async listByPropriedade(propriedadeId: string, authClienteId: string) {
     // Valida se a propriedade pertence ao cliente
@@ -27,7 +26,7 @@ export class ArtefatosService {
   }
 
   /**
-   * Lista todos os artefatos vinculados ao cliente com URLs da nossa API (Proxy).
+   * Lista todos os artefatos vinculados ao cliente
    */
   async listByCliente(authClienteId: string) {
     const artefatos = await this.artefatosRepository.findByClienteId(authClienteId);
@@ -39,25 +38,25 @@ export class ArtefatosService {
   }
 
   /**
-   * Retorna metadados de um artefato específico com URL da nossa API (Proxy).
+   * Retorna metadados de um artefato específico com URL (Proxy).
    */
   async getById(artefatoId: string, authClienteId: string) {
     const artefato = await this.artefatosRepository.findById(artefatoId);
 
     if (!artefato) {
-      throw new ApplicationError('Artefato não encontrado', 404);
+      throw new NotFoundError('Artefato não encontrado');
     }
 
-    const artefatosClienteId = artefato.talhao?.propriedade?.clienteId;
+    // Tenancy: Verifica tanto no talhão quanto diretamente na propriedade
+    const artefatosClienteId = artefato.talhao?.propriedade?.clienteId || artefato.propriedade?.clienteId;
     
     if (artefatosClienteId !== authClienteId) {
-      throw new ApplicationError('Acesso negado a este artefato', 403);
+      throw new ForbiddenError('Acesso negado a este artefato');
     }
     
     return {
       ...artefato,
       url: `/api/artefatos/${artefato.id}/download`,
-      talhao: undefined 
     };
   }
 
@@ -68,13 +67,13 @@ export class ArtefatosService {
     const artefato = await this.artefatosRepository.findById(artefatoId);
 
     if (!artefato) {
-      throw new ApplicationError('Artefato não encontrado', 404);
+      throw new NotFoundError('Artefato não encontrado');
     }
 
-    const artefatosClienteId = artefato.talhao?.propriedade?.clienteId;
+    const artefatosClienteId = artefato.talhao?.propriedade?.clienteId || artefato.propriedade?.clienteId;
     
     if (artefatosClienteId !== authClienteId) {
-      throw new ApplicationError('Acesso negado a este artefato', 403);
+      throw new ForbiddenError('Acesso negado a este artefato');
     }
 
     const stream = this.storage.getReadStream(artefato.caminho);

@@ -51,7 +51,14 @@ Este documento detalha o estado atual dos endpoints da API, sua implementação,
 ### 1.4. Artefatos (`/api/artefatos`)
 | Endpoint | Método | Descrição | Status Imp. | Status Doc. |
 | :--- | :---: | :--- | :---: | :---: |
-| `/artefatos/propriedade/:id` | `GET` | Listar GeoTIFFs com Signed URLs | ✅ Sim | ✅ Sim |
+| `/artefatos` | `GET` | Listar todos os artefatos do cliente | ✅ Sim | ✅ Sim |
+| `/artefatos/propriedade/:id` | `GET` | Listar artefatos de uma propriedade | ✅ Sim | ✅ Sim |
+| `/artefatos/:id` | `GET` | Detalhar um artefato (metadados) | ✅ Sim | ✅ Sim |
+| `/artefatos/:id/download` | `GET` | Download direto (Proxy Stream) | ✅ Sim | ✅ Sim |
+
+**Observações:**
+- A implementação atual utiliza **Proxy/Stream** (`/download`) em vez de **Signed URLs** diretas do GCS em todos os retornos de lista, divergindo parcialmente da documentação técnica.
+- DTOs e Validadores ainda não foram implementados (pendente).
 
 ---
 
