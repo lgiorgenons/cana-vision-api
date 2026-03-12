@@ -62,4 +62,4 @@ export class ArtefatosController {
 
     stream.pipe(res);
   }
-  }
+}
