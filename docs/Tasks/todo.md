@@ -1,13 +1,17 @@
 # TODO - AtmosAgro API
 
 ## ✅ Concluído
-- [x] Confirmar tecnologias (Node.js LTS, TypeScript, Express, Prisma, Postgres/Supabase).
-- [x] Definir convenções de projeto (estrutura de pastas, lint, scripts de testes).
 - [x] Modelar banco (schema Prisma + extensões PostGIS / uuid-ossp).
-- [x] Elaborar contratos dos endpoints existentes (`docs/api/`).
-- [x] Implementar Multitenancy (isolamento por `clienteId`) em Propriedades e Talhões.
-- [x] Implementar Autenticação robusta (Cookies HTTP-Only + Supabase).
-- [x] Criar integração com GCS para Signed URLs (Artefatos).
+- [x] Implementar Multitenancy (isolamento por `clienteId`) em Propriedades, Talhões e Artefatos.
+- [x] Criar integração com GCS para Proxy/Stream (Artefatos).
+- [x] Implementar Identificadores Semânticos (`propriedade-data-indice`) nos Artefatos.
+- [x] Criar Documentação de Arquitetura (Regras de Negócio, Tenancy, DTOs e Semântica).
+- [x] Criar script de Seed robusto para Usina Moreno (Mocks).
+
+## 🚀 Próximos Passos (Artefatos & Pipeline)
+- [ ] Implementar DTOs reais no código para ocultar campos internos (`caminho`).
+- [ ] Criar Validadores (Zod) para os novos campos de busca.
+- [ ] Avaliar transição de Proxy Stream para Signed URLs diretas.
 
 ## 🚀 Próximos Passos (Pipeline de Imagens)
 - [ ] Implementar endpoints de gestão do Pipeline (`POST /api/pipeline`, `GET /status`).
